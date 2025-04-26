@@ -110,6 +110,7 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(AppSize.s100),
                       onTap: () {
+                        context.pop();
                         context.replaceRoute(
                             HomeRoute(orderDetails: order.orderDetails));
                       },

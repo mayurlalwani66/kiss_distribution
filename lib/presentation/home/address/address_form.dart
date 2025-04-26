@@ -39,6 +39,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
   bool isDefault = false;
   String selectedState = "";
   String typeOfAddress = AppStrings.home;
+  int id = 0;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
 
   void showCurrentData() {
     if (widget.isFromHomeScreen == false) {
+      id = widget.shippingData!.id!;
       _streetController.text = widget.shippingData!.addressLineOne;
       _suburbController.text = widget.shippingData!.addressLineTwo;
       _postCodeController.text = widget.shippingData!.pincode;
@@ -110,7 +112,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                         await addressProvider.updateShippingAddress(
                             UpdateShippingAddressUseCaseInput(
                                 "${widget.shippingData?.id}",
-                                widget.shippingData!.id!,
+                                id,
                                 _receiverNameController.text,
                                 _phoneNumberController.text,
                                 _postCodeController.text,
