@@ -3,7 +3,7 @@ import 'package:k_distribution/app/di.dart';
 import 'package:k_distribution/domain/usecase/order_usecase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../common/freezed_data_classes/freezed_data_class.dart';
+import '../common/freezed_data_class/freezed_data_class.dart';
 
 class ViewOrderNotifier extends StateNotifier<AsyncValue<ViewOrderState>> {
   final ViewOrderUseCase _viewOrderUseCase;

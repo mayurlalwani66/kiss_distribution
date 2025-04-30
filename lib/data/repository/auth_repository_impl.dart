@@ -20,7 +20,8 @@ class AuthRepositoryImpl extends AuthRepository {
       if (response.status == ApiInternalStatus.SUCCESS) {
         return Right(response.data.toDomain());
       } else {
-        return Left(Failure(ResponseCode.DEFAULT, ResponseMessage.DEFAULT));
+        return Left(
+            Failure(ResponseCode.BAD_REQUEST, ResponseMessage.BAD_REQUEST));
       }
     } catch (error) {
       return (Left(ErrorHandler.handle(error).failure));

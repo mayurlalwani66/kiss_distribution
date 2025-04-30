@@ -51,7 +51,7 @@ class ChangeAddress extends ConsumerWidget {
                         return ListView.separated(
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
-                          itemCount: shipping.shippingAddresses.length,
+                          itemCount: shipping!.shippingAddresses.length,
                           separatorBuilder: (BuildContext context, int index) =>
                               const Divider(height: AppSize.s2),
                           itemBuilder: (context, index) {

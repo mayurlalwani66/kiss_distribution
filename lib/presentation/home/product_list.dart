@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:k_distribution/app/extension.dart';
 import 'package:k_distribution/domain/model/product_model.dart';
@@ -21,11 +23,12 @@ class ProductList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
+    return CustomScrollView(
+      physics:
+          Platform.isIOS ? ClampingScrollPhysics() : ClampingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Container(
             height: AppSize.s60,
             margin: const EdgeInsets.only(top: AppMargin.m10),
             padding: const EdgeInsets.all(AppPadding.p15),
@@ -37,28 +40,27 @@ class ProductList extends StatelessWidget {
                   .copyWith(fontSize: FontSize.s16),
             ),
           ),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              var product = products[index];
-              var quantity = product.cartQty;
-              return ProductCardWidget(
-                product: product,
-                quantity: quantity,
-                increaseQuantity: () {
-                  increaseQuantity(product.id);
-                },
-                decreaseQuantity: () {
-                  decreaseQuantity(product.id);
-                },
-                totalAmount: totalAmount(product.id).roundToTwo(),
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+        SliverList(
+            delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            var product = products[index];
+            var quantity = product.cartQty;
+            return ProductCardWidget(
+              product: product,
+              quantity: quantity,
+              increaseQuantity: () {
+                increaseQuantity(product.id);
+              },
+              decreaseQuantity: () {
+                decreaseQuantity(product.id);
+              },
+              totalAmount: totalAmount(product.id).roundToTwo(),
+            );
+          },
+          childCount: products.length,
+        )),
+      ],
     );
   }
 }

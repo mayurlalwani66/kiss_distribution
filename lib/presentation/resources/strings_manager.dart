@@ -14,6 +14,7 @@ class AppStrings {
       "Login to your account to continue shopping";
   static const String loginWithQr = "Login With QR";
   static const String registerText = "Not a member ? Sign up";
+  static const String loginFailedMsg = "Login Failed. Try Again";
 
   static const String ok = "Ok";
 
