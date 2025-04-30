@@ -7,7 +7,6 @@ import 'package:k_distribution/presentation/common/common_provider/shipping_prov
 import 'package:k_distribution/presentation/common/common_provider/user_provider.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
-import 'package:k_distribution/presentation/common/freezed_data_classes/freezed_data_class.dart';
 import 'package:k_distribution/presentation/common/common_widgets/custom_textfeild.dart';
 import '../../common/common_provider/form_data_provider.dart';
 import '../../common/common_widgets/common_elevated_button.dart';
@@ -235,7 +234,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                         style: getRegularStyle(
                             color: ColorManager.colorTextFieldLabel,
                             fontSize: AppSize.s12)),
-                    statesDropdown(ref.watch(shippingAddressProvider)),
+                    statesDropdown(),
                     const SizedBox(height: AppSize.s10),
                     checkboxWidget(),
                     const SizedBox(height: AppSize.s10),
@@ -280,7 +279,8 @@ class _AddressFormState extends ConsumerState<AddressForm> {
     );
   }
 
-  Widget statesDropdown(AsyncValue<ShippingState> shippingState) {
+  Widget statesDropdown() {
+    var shippingState = ref.watch(shippingAddressProvider);
     return shippingState.when(
       data: (data) {
         return DropdownButtonFormField<String>(
@@ -288,7 +288,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
           isDense: true,
           dropdownColor: ColorManager.colorWhite,
           hint: Text(AppStrings.enterYourState),
-          items: data.states
+          items: data?.states
               .map((state) => DropdownMenuItem<String>(
                     alignment: Alignment.center,
                     value: state.value,

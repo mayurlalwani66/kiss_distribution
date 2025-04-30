@@ -68,6 +68,8 @@ class ColorManager {
   static Color colorDarkBlue = "#0D1863".fromHex();
 
   static Color colorMailForHelp = "#9f0b0b".fromHex();
+  static Color colorSnakbarErrorBg = "#e09e9e".fromHex();
+  static Color colorSnakbarErrorText = "#ab0707".fromHex();
 }
 
 extension HexColor on String {

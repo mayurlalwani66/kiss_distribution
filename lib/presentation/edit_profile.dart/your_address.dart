@@ -34,7 +34,7 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
       loading: () => const CircularProgressWidget(),
       error: (error, _) => ErrorTextWidget(error: error.toString()),
       data: (shipping) {
-        final addresses = shipping.shippingAddresses;
+        final addresses = shipping!.shippingAddresses;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

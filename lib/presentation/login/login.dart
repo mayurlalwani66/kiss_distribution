@@ -1,10 +1,12 @@
+import 'dart:io';
+
 import 'package:auto_route/annotations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/app/functions.dart';
+import 'package:k_distribution/presentation/common/common_widgets/app_snakbar.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/common_elevated_button.dart';
-import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
 import 'package:k_distribution/presentation/login/login_provider.dart';
 import 'package:k_distribution/presentation/resources/assets_manager.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
@@ -46,18 +48,18 @@ class _LoginViewState extends ConsumerState<LoginScreen> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: ColorManager.colorWhite,
-        body: loginState.when(
-          loading: () => CircularProgressWidget(),
-          data: (data) => loginWidget(context),
-          error: (Object error, StackTrace stackTrace) =>
-              ErrorTextWidget(error: error.toString()),
-        ),
+        body: Stack(children: [
+          loginWidget(context),
+          if (loginState.isLoading) CircularProgressWidget()
+        ]),
       ),
     );
   }
 
   Widget loginWidget(BuildContext context) {
     return SingleChildScrollView(
+      physics:
+          Platform.isIOS ? ClampingScrollPhysics() : ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

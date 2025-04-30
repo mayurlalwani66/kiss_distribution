@@ -5,6 +5,8 @@ import 'package:k_distribution/app/di.dart';
 import 'package:k_distribution/domain/model/auth_model.dart';
 import 'package:k_distribution/domain/usecase/auth_usecase.dart';
 import 'package:k_distribution/presentation/common/common_provider/user_provider.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
+import '../common/common_widgets/app_snakbar.dart';
 import '../resources/routes_manager.dart';
 
 class LoginNotifier extends StateNotifier<AsyncValue<Authentication?>> {
@@ -21,9 +23,10 @@ class LoginNotifier extends StateNotifier<AsyncValue<Authentication?>> {
         .execute(LoginUsecaseInput(phoneNumber, email, password));
 
     request.fold((failure) {
-      state = AsyncError(failure.message, StackTrace.current);
+      state = AsyncValue.error(failure.message, StackTrace.current);
+      AppSnackbar.show(context, AppStrings.loginFailedMsg);
     }, (data) {
-      state = AsyncData(data);
+      state = AsyncValue.data(data);
 
       appPreferences.setToken(data.token);
       String token = appPreferences.getToken();
@@ -31,6 +34,7 @@ class LoginNotifier extends StateNotifier<AsyncValue<Authentication?>> {
         ref.read(dioProvider).options.headers["Authorization"] =
             "Bearer $token";
         ref.read(userProvider.notifier).getUserData();
+
         context.replaceRoute(HomeRoute());
       }
     });

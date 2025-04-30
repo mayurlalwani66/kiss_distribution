@@ -5,7 +5,7 @@ import 'package:k_distribution/domain/model/user_model.dart';
 
 import '../../../app/di.dart';
 import '../../../domain/usecase/user_usecase.dart';
-import '../freezed_data_classes/freezed_data_class.dart';
+import '../freezed_data_class/freezed_data_class.dart';
 import 'form_data_provider.dart';
 
 class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
@@ -26,7 +26,12 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
         ShippingAddress? defaultAddress;
 
         try {
-          defaultAddress = addresses.firstWhere((a) => a.isDefault == true);
+          for (final address in addresses) {
+            if (address.isDefault == true) {
+              defaultAddress = address;
+              break;
+            }
+          }
         } catch (_) {
           defaultAddress = null;
         }
@@ -62,7 +67,7 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
       (address) {
         ref.read(appPreferencesProvider).setAddressId(address.id!);
 
-        final current = state.valueOrNull ?? const ShippingState();
+        final current = state.valueOrNull ?? ShippingState();
         final updatedAddresses = [...current.shippingAddresses, address];
 
         state = AsyncValue.data(
@@ -104,7 +109,7 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
         state = AsyncValue.error(failure.message, StackTrace.current);
       },
       (statesList) {
-        final current = state.valueOrNull ?? const ShippingState();
+        final current = state.valueOrNull ?? ShippingState();
         state = AsyncValue.data(current.copyWith(states: statesList));
       },
     );
@@ -138,7 +143,7 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
 }
 
 final shippingAddressProvider =
-    StateNotifierProvider<ShippingAddressNotifier, AsyncValue<ShippingState>>(
+    StateNotifierProvider<ShippingAddressNotifier, AsyncValue<ShippingState?>>(
         (ref) {
   return ShippingAddressNotifier(ref);
 });

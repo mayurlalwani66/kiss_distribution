@@ -6,13 +6,13 @@ import 'package:k_distribution/domain/model/user_model.dart';
 import 'package:k_distribution/domain/usecase/order_usecase.dart';
 import 'package:k_distribution/domain/usecase/user_usecase.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
-import 'package:k_distribution/presentation/common/freezed_data_classes/freezed_data_class.dart';
 
 import '../../app/di.dart';
 import '../../data/request/request.dart';
 import '../../domain/model/product_model.dart';
 import '../../domain/usecase/product_usecase.dart';
 import '../common/common_provider/form_data_provider.dart';
+import '../common/freezed_data_class/freezed_data_class.dart';
 
 class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
   final Ref ref;
@@ -29,7 +29,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
         state = AsyncValue.error(failure.message, StackTrace.current);
       },
       (products) {
-        final current = state.valueOrNull ?? const HomePageState();
+        final current = state.valueOrNull ?? HomePageState();
         state = AsyncValue.data(current.copyWith(products: products));
       },
     );
@@ -46,7 +46,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
         state = AsyncValue.error(failure.message, StackTrace.current);
       },
       (charges) {
-        final current = state.valueOrNull ?? const HomePageState();
+        final current = state.valueOrNull ?? HomePageState();
         state = AsyncValue.data(current.copyWith(shippingCharges: charges));
       },
     );
@@ -61,7 +61,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
         state = AsyncValue.error(failure.message, StackTrace.current);
       },
       (methods) {
-        final current = state.valueOrNull ?? const HomePageState();
+        final current = state.valueOrNull ?? HomePageState();
         state = AsyncValue.data(current.copyWith(paymentMethods: methods));
 
         for (var method in methods) {
@@ -114,7 +114,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
         getShippingChargeProperty((x) => x.deliveryTime);
 
     final selectedAddress =
-        ref.read(shippingAddressProvider).asData?.value.selectedAddress;
+        ref.read(shippingAddressProvider).asData!.value?.selectedAddress;
     if (selectedAddress == null) {
       state = AsyncValue.error("No address selected", StackTrace.current);
       return;
@@ -145,7 +145,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
     result.fold((failure) {
       state = AsyncValue.error(failure.message, StackTrace.current);
     }, (data) {
-      final current = state.valueOrNull ?? const HomePageState();
+      final current = state.valueOrNull ?? HomePageState();
       state = AsyncValue.data(current.copyWith(createOrderResponse: data));
     });
   }

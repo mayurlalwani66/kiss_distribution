@@ -18,7 +18,7 @@ import 'package:k_distribution/presentation/resources/color_manager.dart';
 import 'package:k_distribution/presentation/resources/routes_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
 import '../../domain/usecase/product_usecase.dart';
-import '../common/freezed_data_classes/freezed_data_class.dart';
+import '../common/freezed_data_class/freezed_data_class.dart';
 
 @RoutePage()
 class HomeScreen extends ConsumerStatefulWidget {
@@ -50,7 +50,7 @@ class _HomePageState extends ConsumerState<HomeScreen> {
           0, '', 0, false, [], 1, 1, 1000, '', 'desc', '', "PUBLISHED"),
     );
 
-    if (ref.read(shippingAddressProvider).asData?.value.selectedAddress !=
+    if (ref.read(shippingAddressProvider).asData?.value?.selectedAddress !=
         null) {
       await homeProvider.getAllShippingCharges();
     }
@@ -155,14 +155,14 @@ class _HomePageState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildShippingSection(
-      BuildContext context, AsyncValue<ShippingState> shippingState) {
+      BuildContext context, AsyncValue<ShippingState?> shippingState) {
     return shippingState.when(
       loading: () => const SizedBox(),
       error: (error, _) => Text(error.toString()),
       data: (shipping) => AddressPanel(
-        selectedAddress: shipping.selectedAddress,
-        addresses: shipping.shippingAddresses,
-        onTap: () => _showAddressBottomSheet(context, shipping),
+        selectedAddress: shipping?.selectedAddress,
+        addresses: shipping?.shippingAddresses ?? [],
+        onTap: () => _showAddressBottomSheet(context, shipping!),
       ),
     );
   }
@@ -182,7 +182,7 @@ class _HomePageState extends ConsumerState<HomeScreen> {
                     .read(shippingAddressProvider)
                     .asData
                     ?.value
-                    .selectedAddress !=
+                    ?.selectedAddress !=
                 null) {
               homeProvider.increment(productId);
               cartQty++;
