@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/presentation/common/common_widgets/common_elevated_button.dart';
@@ -29,7 +28,7 @@ class ForgotPassword extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               IconButton(
-                onPressed: () => context.router.pop(),
+                onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.close),
               ),
             ],

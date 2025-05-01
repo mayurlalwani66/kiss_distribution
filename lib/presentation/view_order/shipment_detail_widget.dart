@@ -3,6 +3,7 @@ import 'package:k_distribution/app/extension.dart';
 import 'package:k_distribution/domain/model/order_model.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
 import 'package:k_distribution/presentation/resources/font_manager.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/styles_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
 
@@ -24,7 +25,7 @@ class ShipmentDetailWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Shipment Details',
+            AppStrings.shipmentDetails,
             style: getBoldStyle(
                 fontSize: FontSize.s16, color: ColorManager.colorBlack),
           ),
@@ -34,27 +35,31 @@ class ShipmentDetailWidget extends StatelessWidget {
             spacing: AppSize.s20,
             runSpacing: AppSize.s10,
             children: [
-              detailItem(
-                  'Provider Name', getValue(shipmentDetail?.providerName)),
-              detailItem('Delivery Amount',
+              detailItem(AppStrings.providerName,
+                  getValue(shipmentDetail?.providerName)),
+              detailItem(AppStrings.deliveryAmount,
                   getValue(shipmentDetail?.deliveryAmount.toString())),
-              detailItem('Delivery Date',
+              detailItem(AppStrings.deliveryDate,
                   getValue(shipmentDetail?.deliveryDate.toFormattedString())),
-              detailItem('Parcel Height (In cm)',
+              detailItem(AppStrings.parcelHeight,
                   getValue(shipmentDetail?.parsalHight.toString())),
-              detailItem('Parcel Width (In cm)',
+              detailItem(AppStrings.parcelWidth,
                   getValue(shipmentDetail?.parsalWidth.toString())),
-              detailItem('Parcel Weight (In kg)',
+              detailItem(AppStrings.parcelWeight,
                   getValue(shipmentDetail?.parcelWeight.toString())),
-              detailItem('Parcel Length (In cm)',
+              detailItem(AppStrings.parcelLength,
                   getValue(shipmentDetail?.parcelLength.toString())),
-              detailItem('Unique ID', getValue(shipmentDetail?.uniqueId)),
               detailItem(
-                  'Tracking Link', getValue(shipmentDetail?.trackingLink)),
+                  AppStrings.uniqueId, getValue(shipmentDetail?.uniqueId)),
+              detailItem(AppStrings.trackingLink,
+                  getValue(shipmentDetail?.trackingLink)),
               detailItem(
-                  'Is COD', shipmentDetail?.isCOD == true ? 'Yes' : 'No'),
-              detailItem('Status', getValue(shipmentDetail?.status)),
-              detailItem('Notes', getValue(shipmentDetail?.notes)),
+                  AppStrings.isCod,
+                  shipmentDetail?.isCOD == true
+                      ? AppStrings.yes
+                      : AppStrings.no),
+              detailItem(AppStrings.status, getValue(shipmentDetail?.status)),
+              detailItem(AppStrings.notes, getValue(shipmentDetail?.notes)),
             ],
           ),
         ],

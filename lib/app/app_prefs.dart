@@ -10,11 +10,7 @@ const String PREFS_KEY_USERPHONENUMBER = "PREFS_KEY_USERPHONENUMBER";
 const String PREFS_KEY_USERFIRSTNAME = "PREFS_KEY_USERFIRSTNAME";
 const String PREFS_KEY_USERLASTNAME = "PREFS_KEY_USERLASTNAME";
 
-const String PREFS_KEY_ADDRESSID = "PREFS_KEY_ADDRESSID";
 const String PREFS_KEY_PAYMENTTYPE = "PREFS_KEY_PAYMENTTYPE";
-const String PREFS_KEY_ORDERID = "PREFS_KEY_ORDERID";
-const String PREFS_KEY_PAYMENT_METHOD_ID = "PREFS_KEY_PAYMENT_METHOD_ID";
-const String PREFS_KEY_SHIPMENT_ID = "PREFS_KEY_SHIPMENT_ID";
 
 class AppPreferences {
   final SharedPreferences _sharedPreferences;
@@ -82,43 +78,11 @@ class AppPreferences {
     return _sharedPreferences.getString(PREFS_KEY_USERLASTNAME) ?? "";
   }
 
-  void setAddressId(int addressId) {
-    _sharedPreferences.setInt(PREFS_KEY_ADDRESSID, addressId);
-  }
-
-  int getAddressId() {
-    return _sharedPreferences.getInt(PREFS_KEY_ADDRESSID) ?? 0;
-  }
-
   void setPaymentType(String paymentAppId) {
     _sharedPreferences.setString(PREFS_KEY_PAYMENTTYPE, paymentAppId);
   }
 
   String getPaymentType() {
     return _sharedPreferences.getString(PREFS_KEY_PAYMENTTYPE) ?? "";
-  }
-
-  void setOrderId(String paymentAppId) {
-    _sharedPreferences.setString(PREFS_KEY_ORDERID, paymentAppId);
-  }
-
-  String getOrderId() {
-    return _sharedPreferences.getString(PREFS_KEY_ORDERID) ?? "";
-  }
-
-  void setPaymentId(int paymentMethodId) {
-    _sharedPreferences.setInt(PREFS_KEY_PAYMENT_METHOD_ID, paymentMethodId);
-  }
-
-  int getPaymentId() {
-    return _sharedPreferences.getInt(PREFS_KEY_PAYMENT_METHOD_ID) ?? 0;
-  }
-
-  void setShipmentId(String value) {
-    _sharedPreferences.setString(PREFS_KEY_SHIPMENT_ID, value);
-  }
-
-  String getShipmentId() {
-    return _sharedPreferences.getString(PREFS_KEY_SHIPMENT_ID) ?? "";
   }
 }

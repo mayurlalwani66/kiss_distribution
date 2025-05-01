@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/domain/model/user_model.dart';
@@ -65,8 +64,6 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
         state = AsyncValue.error(failure.message, StackTrace.current);
       },
       (address) {
-        ref.read(appPreferencesProvider).setAddressId(address.id!);
-
         final current = state.valueOrNull ?? ShippingState();
         final updatedAddresses = [...current.shippingAddresses, address];
 
@@ -92,6 +89,27 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
             a.typeOfAddress,
             a.userId,
             a.id == newDefaultId,
+            a.isDeliveryAvailable);
+      }).toList();
+      return data.copyWith(shippingAddresses: updatedList);
+    });
+  }
+
+  void removeDefaultLocally() {
+    state = state.whenData((data) {
+      final updatedList = data.shippingAddresses.map((a) {
+        return ShippingAddress(
+            a.id,
+            a.fullName,
+            a.phoneNumber,
+            a.pincode,
+            a.state,
+            a.city,
+            a.addressLineOne,
+            a.addressLineTwo,
+            a.typeOfAddress,
+            a.userId,
+            false,
             a.isDeliveryAvailable);
       }).toList();
       return data.copyWith(shippingAddresses: updatedList);
@@ -124,7 +142,7 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
       state = AsyncValue.error(failure.message, StackTrace.current);
     }, (data) {
       if (data.isNotEmpty) {
-        context.pop();
+        Navigator.pop(context, true);
       }
     });
   }
@@ -143,7 +161,7 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
 }
 
 final shippingAddressProvider =
-    StateNotifierProvider<ShippingAddressNotifier, AsyncValue<ShippingState?>>(
+    StateNotifierProvider<ShippingAddressNotifier, AsyncValue<ShippingState>>(
         (ref) {
   return ShippingAddressNotifier(ref);
 });

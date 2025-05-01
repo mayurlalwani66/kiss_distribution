@@ -19,39 +19,65 @@ class OrderStatusCard extends StatelessWidget {
 
   final String orderStatus;
   final String orderType;
-  final String otp;
+  final String? otp;
   final double addtionalDeliveryCharge;
   final VoidCallback? onCallSupport;
 
   @override
   Widget build(BuildContext context) {
-    Widget statusCard(
-        {required Color color,
-        required String image,
-        required String message,
-        Widget? extra}) {
+    Widget statusCard({
+      required Color color,
+      required String image,
+      required String message,
+      required Color textColor,
+      Widget? extra,
+    }) {
       return Card(
-        color: color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSize.s8),
         ),
         margin: EdgeInsets.symmetric(
             horizontal: AppMargin.m10, vertical: AppMargin.m5),
-        child: ListTile(
-          dense: true,
-          contentPadding: EdgeInsets.all(AppPadding.p15),
-          leading: Image.asset(image, width: AppSize.s30, fit: BoxFit.cover),
-          title: Text(message,
-              style: getBoldStyle(
-                  fontSize: FontSize.s16, color: ColorManager.colorBlack)),
-          subtitle: extra,
+        elevation: AppSize.s2,
+        child: Container(
+          padding: EdgeInsets.all(AppPadding.p15),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(AppSize.s8),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.asset(image, width: AppSize.s30, fit: BoxFit.cover),
+              const SizedBox(width: AppSize.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message,
+                      style: getBoldStyle(
+                        fontSize: FontSize.s16,
+                        color: textColor,
+                      ),
+                    ),
+                    if (extra != null) ...[
+                      const SizedBox(height: AppSize.s8),
+                      extra,
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     switch (orderStatus) {
-      case "Draft":
+      case AppStrings.draft:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorDraftOrder,
           image: ImageAssets.orderConfirmationImg,
           message: AppStrings.orderInConfirmation,
@@ -71,29 +97,33 @@ class OrderStatusCard extends StatelessWidget {
                 )
               : const Text(AppStrings.paymentNotConfirmed),
         );
-      case "New":
+      case AppStrings.statusNew:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorNewOrder,
           image: ImageAssets.checkListImg,
           message: AppStrings.orderPlaced,
         );
-      case "Accepted":
+      case AppStrings.accepted:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorAcceptedOrder,
           image: ImageAssets.orderAcceptedImg,
           message: AppStrings.orderAccepted,
         );
-      case "PackingInProcess":
+      case AppStrings.packingInProcess:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorPreparedOrder,
           image: ImageAssets.orderPreparedImg,
           message: AppStrings.orderPreparing,
         );
-      case "Packed":
+      case AppStrings.packed:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorPackedOrder,
           image: ImageAssets.orderPackedImg,
-          message: orderType == "Delivery"
+          message: orderType == AppStrings.delivery
               ? AppStrings.orderPackedDelivery
               : AppStrings.orderPackedPickup,
           extra: otp != null
@@ -101,9 +131,9 @@ class OrderStatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: AppSize.s8),
-                    Text("Delivery Verification Code:",
+                    Text(AppStrings.deliveryVerificationCode,
                         style: getRegularStyle(color: ColorManager.colorBlack)),
-                    Text(otp,
+                    Text(otp!,
                         style: getBoldStyle(
                             color: ColorManager.colorBlack,
                             fontSize: FontSize.s16)),
@@ -111,12 +141,13 @@ class OrderStatusCard extends StatelessWidget {
                 )
               : null,
         );
-      case "Delivering":
+      case AppStrings.delivering:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorDeliveryOrder,
           image: ImageAssets.orderDeliveryImg,
           message:
-              "${orderType == "Delivery" ? AppStrings.orderOutForDelivery : AppStrings.orderOutForPickup}.",
+              "${orderType == AppStrings.delivery ? AppStrings.orderOutForDelivery : AppStrings.orderOutForPickup}.",
           extra: otp != null
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +157,7 @@ class OrderStatusCard extends StatelessWidget {
                         style: getRegularStyle(
                             color: ColorManager.colorBlack,
                             fontSize: FontSize.s12)),
-                    Text(otp,
+                    Text(otp!,
                         style: getBoldStyle(
                             color: ColorManager.colorBlack,
                             fontSize: FontSize.s16)),
@@ -134,16 +165,18 @@ class OrderStatusCard extends StatelessWidget {
                 )
               : null,
         );
-      case "Completed":
+      case AppStrings.completed:
         return statusCard(
+          textColor: ColorManager.colorWhite,
           color: ColorManager.colorCompletedOrder,
           image: ImageAssets.checkListImg,
-          message: orderType == "Delivery"
+          message: orderType == AppStrings.delivery
               ? AppStrings.orderDelivered
               : AppStrings.orderPicked,
         );
-      case "Rejected":
+      case AppStrings.rejected:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorRejectedOrder,
           image: ImageAssets.orderRejectedImg,
           message: AppStrings.orderRejected,
@@ -152,8 +185,9 @@ class OrderStatusCard extends StatelessWidget {
                   color: ColorManager.colorRejectedOrderReason,
                   fontSize: FontSize.s12)),
         );
-      case "Cancelled":
+      case AppStrings.cancelled:
         return statusCard(
+          textColor: ColorManager.colorBlack,
           color: ColorManager.colorRejectedOrder,
           image: ImageAssets.orderCancelledImg,
           message: AppStrings.orderCancelled,

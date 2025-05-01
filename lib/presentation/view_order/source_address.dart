@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:k_distribution/domain/model/order_model.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
 import 'package:k_distribution/presentation/resources/font_manager.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/styles_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
 
@@ -22,7 +23,7 @@ class SourceAddressWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Source Address',
+            AppStrings.sourceAddress,
             style: getBoldStyle(
                 fontSize: FontSize.s16, color: ColorManager.colorBlack),
           ),
@@ -32,13 +33,17 @@ class SourceAddressWidget extends StatelessWidget {
             spacing: AppSize.s20,
             runSpacing: AppSize.s10,
             children: [
-              addressItem('State', getValue(sourceAddress?.sourceState)),
-              addressItem('District', getValue(sourceAddress?.sourceDistrict)),
-              addressItem('City', getValue(sourceAddress?.sourceVillage)),
-              addressItem('Post Code', getValue(sourceAddress?.sourcePincode)),
-              addressItem('Source PhoneNumber One',
+              addressItem(
+                  AppStrings.state, getValue(sourceAddress?.sourceState)),
+              addressItem(
+                  AppStrings.district, getValue(sourceAddress?.sourceDistrict)),
+              addressItem(
+                  AppStrings.city, getValue(sourceAddress?.sourceVillage)),
+              addressItem(
+                  AppStrings.postCode, getValue(sourceAddress?.sourcePincode)),
+              addressItem(AppStrings.sourcePhoneNumberOne,
                   getValue(sourceAddress?.sourcePhoneNumberOne)),
-              addressItem('Source PhoneNumber Two',
+              addressItem(AppStrings.sourcePhoneNumberTwo,
                   getValue(sourceAddress?.sourcePhoneNumberTwo)),
             ],
           ),
@@ -47,7 +52,7 @@ class SourceAddressWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Address',
+                AppStrings.address,
                 style: getBoldStyle(
                     fontSize: FontSize.s14, color: ColorManager.colorBlack),
               ),

@@ -1,4 +1,5 @@
-import 'package:auto_route/auto_route.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,10 +23,10 @@ class ChangeAddress extends ConsumerWidget {
     final mediaHeight = MediaQuery.of(context).size.height;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          AppPadding.p16, AppPadding.p16, AppPadding.p16, 0),
+          AppPadding.p16, AppPadding.p16, AppPadding.p16, AppPadding.p0),
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: mediaHeight * 1.0,
+          maxHeight: mediaHeight * AppSize.s1,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -39,19 +40,22 @@ class ChangeAddress extends ConsumerWidget {
                         fontSize: FontSize.s16)),
                 IconButton(
                     onPressed: () {
-                      context.router.pop();
+                      Navigator.pop(context);
                     },
                     icon: const Icon(Icons.close))
               ],
             ),
             Flexible(
               child: SingleChildScrollView(
+                physics: Platform.isIOS
+                    ? ClampingScrollPhysics()
+                    : ClampingScrollPhysics(),
                 child: ref.watch(shippingAddressProvider).when(
                       data: (shipping) {
                         return ListView.separated(
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
-                          itemCount: shipping!.shippingAddresses.length,
+                          itemCount: shipping.shippingAddresses.length,
                           separatorBuilder: (BuildContext context, int index) =>
                               const Divider(height: AppSize.s2),
                           itemBuilder: (context, index) {
@@ -70,7 +74,7 @@ class ChangeAddress extends ConsumerWidget {
 
                                 Future.microtask(() {
                                   if (context.mounted) {
-                                    context.router.pop();
+                                    Navigator.pop(context);
                                   }
                                 });
                               },

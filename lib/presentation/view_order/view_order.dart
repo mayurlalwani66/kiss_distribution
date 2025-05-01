@@ -1,11 +1,12 @@
-import 'package:auto_route/auto_route.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/domain/usecase/order_usecase.dart';
 
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
-import 'package:k_distribution/presentation/resources/routes_manager.dart';
+import 'package:k_distribution/presentation/home/home_page.dart';
 import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/view_order/amount_widget.dart';
 import 'package:k_distribution/presentation/view_order/billing_address_widget.dart';
@@ -27,14 +28,10 @@ import '../resources/styles_manager.dart';
 import '../resources/values_manager.dart';
 import 'pickup_address.dart';
 
-@RoutePage()
 class ViewOrderScreen extends ConsumerStatefulWidget {
-  final String orderId;
+  String? orderId;
 
-  const ViewOrderScreen({
-    super.key,
-    @PathParam('orderId') required this.orderId,
-  });
+  ViewOrderScreen({super.key, this.orderId});
 
   @override
   ConsumerState<ViewOrderScreen> createState() => _ViewOrderScreenState();
@@ -49,9 +46,9 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
 
   _bind() async {
     final viewProvider = ref.read(viewOrderProvider.notifier);
-    await viewProvider.getOrderById(widget.orderId);
+    await viewProvider.getOrderById(widget.orderId!);
 
-    await viewProvider.getTransactionByOrderId(widget.orderId);
+    await viewProvider.getTransactionByOrderId(widget.orderId!);
     final shipmentId = viewProvider.getShipmentId();
 
     if (shipmentId != 0) {
@@ -65,19 +62,25 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
     final formData = ref.watch(formDataStoreProvider);
 
     return viewProvider.when(
-      loading: () => Scaffold(body: CircularProgressWidget()),
-      error: (error, stackTrace) => ErrorTextWidget(error: error.toString()),
+      loading: () => Scaffold(
+          backgroundColor: ColorManager.colorLightGray4,
+          body: CircularProgressWidget()),
+      error: (error, stackTrace) => Scaffold(
+          backgroundColor: ColorManager.colorLightGray4,
+          body: ErrorTextWidget(error: error.toString())),
       data: (data) {
         var order = data.viewOrder;
         if (order == null) {
           return Scaffold(
+            backgroundColor: ColorManager.colorLightGray4,
             appBar: AppBar(
-              title: const Text("Order Details"),
+              title: const Text(AppStrings.orderDetails),
             ),
-            body: const Center(
+            body: Center(
               child: Text(
-                "Order not found!",
-                style: TextStyle(fontSize: 18, color: Colors.redAccent),
+                AppStrings.orderNotFound,
+                style: getBoldStyle(
+                    fontSize: FontSize.s18, color: ColorManager.colorErrorRed),
               ),
             ),
           );
@@ -92,7 +95,7 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      context.router.pop();
+                      Navigator.pop(context);
                     },
                     child: Row(
                       children: [
@@ -110,9 +113,13 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(AppSize.s100),
                       onTap: () {
-                        context.pop();
-                        context.replaceRoute(
-                            HomeRoute(orderDetails: order.orderDetails));
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (ctx) =>
+                                HomeScreen(orderDetails: order.orderDetails),
+                          ),
+                          (Route<dynamic> route) => false,
+                        );
                       },
                       child: Container(
                         height: AppSize.s35,
@@ -139,9 +146,12 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
               ),
               titleTextStyle: getBoldStyle(
                   color: ColorManager.colorBlack, fontSize: FontSize.s16),
-              titleSpacing: 0,
+              titleSpacing: AppSize.s0,
             ),
             body: SingleChildScrollView(
+              physics: Platform.isIOS
+                  ? ClampingScrollPhysics()
+                  : ClampingScrollPhysics(),
               child: Column(
                 children: [
                   OrderInformationWidget(
@@ -187,14 +197,18 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
                   BillingAddressWidget(address: order.billingAddress),
                   if (order.shippingAddress != null)
                     ShippingAddressWidget(address: order.shippingAddress),
-                  const SizedBox(height: AppSize.s4),
-                  if (order.orderType == "Pickup")
-                    PickupAddress(
-                      storeName: formData.storeName,
-                      storePhoneNumber: formData.supportPhone,
-                      storeAddressLevel4: formData.addressLevel4,
-                      storeAddressLevel2: formData.addressLevel2,
-                      storePostalcode: formData.postalCode,
+                  if (order.orderType == AppStrings.pickup)
+                    Column(
+                      children: [
+                        const SizedBox(height: AppSize.s4),
+                        PickupAddress(
+                          storeName: formData.storeName,
+                          storePhoneNumber: formData.supportPhone,
+                          storeAddressLevel4: formData.addressLevel4,
+                          storeAddressLevel2: formData.addressLevel2,
+                          storePostalcode: formData.postalCode,
+                        ),
+                      ],
                     ),
                   ProductListWidget(
                     orderDetails: order.orderDetails,
@@ -204,7 +218,7 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
                       showCancelConfirmationDialog(context, () {
                         ref
                             .read(viewOrderProvider.notifier)
-                            .cancelOrder(id, int.parse(widget.orderId));
+                            .cancelOrder(id, int.parse(widget.orderId!));
                       });
                     },
                   ),
@@ -217,12 +231,11 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
                     Column(
                       children: [
                         SourceAddressWidget(
-                          sourceAddress: data.shipmentModel?.sourceAddress,
-                        ),
+                            sourceAddress: data.shipmentModel?.sourceAddress),
                         ShipmentDetailWidget(shipmentDetail: data.shipmentModel)
                       ],
                     ),
-                  if (order.status == "Completed")
+                  if (order.status == AppStrings.completed)
                     FeedbackWidget(
                       onSubmit:
                           (String title, double rating, String description) {
@@ -233,11 +246,14 @@ class _ViewOrderScreenState extends ConsumerState<ViewOrderScreen> {
                   const SizedBox(height: AppSize.s2),
                   AmountWidget(
                     totalGrossAmount: "${order.totalGrossAmount}",
-                    shippingCharge:
-                        "${(order.isShippingOnCustomer ? order.shippingCharges : 0)}",
+                    shippingCharge: order.shippingCharges,
                     orderType: order.orderType,
                     grandTotal:
                         "${(order.fulfilledAmount > 0 ? order.fulfilledAmount : order.totalAmount)}",
+                    isShippingOnCustomer: order.isShippingOnCustomer,
+                    additionalDeliveryCharge:
+                        order.additionalDeliveryCharge.toDouble(),
+                    shippingNotes: order.orderShippingNotes,
                   ),
                 ],
               ),
@@ -253,18 +269,18 @@ void showCancelConfirmationDialog(
     context: context,
     builder: (BuildContext ctx) {
       return AlertDialog(
-        title: const Text("Are you sure to cancel this order Item?"),
+        title: const Text(AppStrings.cancelOrderConfirmationMsg),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text("No"),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(AppStrings.no),
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(ctx).pop();
+              Navigator.pop(ctx);
               onConfirmed();
             },
-            child: const Text("Yes"),
+            child: const Text(AppStrings.yes),
           ),
         ],
       );

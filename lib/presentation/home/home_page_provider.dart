@@ -114,10 +114,14 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
         getShippingChargeProperty((x) => x.deliveryTime);
 
     final selectedAddress =
-        ref.read(shippingAddressProvider).asData!.value?.selectedAddress;
+        ref.read(shippingAddressProvider).asData!.value.selectedAddress;
     if (selectedAddress == null) {
       state = AsyncValue.error("No address selected", StackTrace.current);
       return;
+    }
+    for (var orderDetail in getOrderDetails()) {
+      print(
+          "${orderDetail.productId},${orderDetail.orderedQuantity},${orderDetail.totalAmount} ");
     }
 
     final result = await ref.read(createOrderUseCaseProvider).execute(
@@ -186,6 +190,8 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
           product.cartQty++;
           updateCart(product);
         }
+        print(productId);
+        print(product.id);
         return product;
       }).toList();
       return homePageState;
@@ -237,6 +243,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
     state = state.whenData((homePageState) {
       for (var product in homePageState.products) {
         product.cartQty = 0;
+        cartItems.clear();
       }
       return homePageState;
     });
@@ -250,6 +257,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
       for (var product in products) {
         if (product.cartQty > 0) {
           totalWeight += product.cartQty * product.weight;
+          print(totalWeight);
         }
       }
     });
@@ -262,12 +270,20 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
   }
 
   double getShippingCharge() {
-    return state.asData?.value.shippingCharges
-            .firstWhere((x) =>
-                x.integrationId ==
-                ref.watch(formDataStoreProvider).shippingAppId)
-            .deliveryCharge ??
-        0.0;
+    try {
+      final shippingCharges = state.asData?.value.shippingCharges ?? [];
+      final shippingAppId = ref.watch(formDataStoreProvider).shippingAppId;
+
+      for (var charge in shippingCharges) {
+        if (charge.integrationId == shippingAppId) {
+          return charge.deliveryCharge;
+        }
+      }
+
+      return 0.0;
+    } catch (e) {
+      return 0.0;
+    }
   }
 
   double getGrandTotal() {
@@ -288,7 +304,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
       state = state.whenData((homePageState) {
         for (var product in homePageState.products) {
           if (product.id == item.productId) {
-            product.cartQty = item.orderedQuantity.toInt();
+            product.cartQty = item.orderedQuantity?.toInt() ?? 0;
             print("sdsdsdsd=> ${product.cartQty}");
           }
         }

@@ -1,10 +1,8 @@
 import 'dart:io';
 
-import 'package:auto_route/annotations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/app/functions.dart';
-import 'package:k_distribution/presentation/common/common_widgets/app_snakbar.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/common_elevated_button.dart';
 import 'package:k_distribution/presentation/login/login_provider.dart';
@@ -19,7 +17,6 @@ import '../forgot_password/forgot_password.dart';
 import '../resources/values_manager.dart';
 import 'login_text_feild.dart';
 
-@RoutePage()
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:k_distribution/presentation/common/common_widgets/common_elevated_button.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
 import 'package:k_distribution/presentation/resources/font_manager.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/styles_manager.dart';
 
 import '../resources/values_manager.dart';
@@ -14,7 +15,7 @@ class CancelOrder extends StatelessWidget {
     return Container(
       padding: MediaQuery.of(context).viewInsets,
       child: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(AppPadding.p16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -23,7 +24,7 @@ class CancelOrder extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Cancel Order",
+                  AppStrings.cancelOrder,
                   style: getBoldStyle(
                       fontSize: FontSize.s16, color: ColorManager.colorBlack),
                 ),
@@ -31,7 +32,7 @@ class CancelOrder extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSize.s20),
-            Text("Cancel Reason",
+            Text(AppStrings.cancelReason,
                 style: getRegularStyle(
                     fontSize: FontSize.s12,
                     color: ColorManager.colorTextFieldLabel)),
@@ -40,11 +41,11 @@ class CancelOrder extends StatelessWidget {
               maxLines: 5,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: "Enter Notes",
+                hintText: AppStrings.enterNotes,
               ),
             ),
             const SizedBox(height: AppSize.s30),
-            CommonElevatedButton(text: "Submit", onTap: () {})
+            CommonElevatedButton(text: AppStrings.submit, onTap: () {})
           ],
         ),
       ),

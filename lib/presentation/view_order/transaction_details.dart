@@ -40,7 +40,7 @@ class TransactionDetailsWidget extends StatelessWidget {
               child: Column(children: [
                 RichText(
                   text: TextSpan(
-                    text: 'Reference No : ',
+                    text: AppStrings.referenceNo,
                     style: getBoldStyle(
                         fontSize: FontSize.s14, color: ColorManager.colorBlack),
                     children: [
@@ -53,11 +53,12 @@ class TransactionDetailsWidget extends StatelessWidget {
                             color: ColorManager.colorBlack),
                       ),
                       TextSpan(
-                        text: (transaction.paymentMethodName == 'Cash'
-                            ? '| Cash On Delivery'
-                            : transaction.paymentMethodName == 'Bank Transfer'
-                                ? '| Bank Transfer'
-                                : '| Online'),
+                        text: (transaction.paymentMethodName == AppStrings.cash
+                            ? AppStrings.cashOnDelivery
+                            : transaction.paymentMethodName ==
+                                    AppStrings.bankTransfer
+                                ? '| ${AppStrings.bankTransfer}'
+                                : AppStrings.online),
                         style: getSemiBoldStyle(
                             fontSize: FontSize.s14,
                             color: ColorManager.colorBlack),
@@ -70,25 +71,25 @@ class TransactionDetailsWidget extends StatelessWidget {
             subtitle: Row(
               children: [
                 Icon(
-                  transaction.paymentType == 'Credit'
+                  transaction.paymentType == AppStrings.credit
                       ? Icons.arrow_drop_down
                       : Icons.arrow_drop_up,
-                  color: transaction.paymentType == 'Credit'
+                  color: transaction.paymentType == AppStrings.credit
                       ? ColorManager.colorRed
                       : ColorManager.colorGreen,
-                  size: 16,
+                  size: AppSize.s16,
                 ),
-                if (transaction.paymentProcessStatus != 'Completed')
+                if (transaction.paymentProcessStatus != AppStrings.completed)
                   Expanded(
                     child: Text(
-                      "\$${transaction.amount} has been ${(transaction.paymentType == 'Credit' ? 'refunded' : 'paid')} on ${transaction.paymentDate.toFormattedString()}",
+                      "\$${transaction.amount} has been ${(transaction.paymentType == AppStrings.credit ? AppStrings.refunded : AppStrings.paid)} on ${transaction.paymentDate.toFormattedString()}",
                       style: getRegularStyle(color: ColorManager.colorPrimary),
                     ),
                   ),
                 if (transaction.paymentProcessStatus != 'Pending')
                   Expanded(
                     child: Text(
-                      "\$${transaction.amount} Your ${(transaction.paymentType == 'Credit' ? 'refunded' : 'paid')} is being processed on ${transaction.paymentDate.toFormattedString()}",
+                      "\$${transaction.amount} Your ${(transaction.paymentType == AppStrings.credit ? AppStrings.refunded : AppStrings.paid)} is being processed on ${transaction.paymentDate.toFormattedString()}",
                       style: getRegularStyle(color: ColorManager.colorPrimary),
                     ),
                   ),
@@ -104,7 +105,7 @@ class TransactionDetailsWidget extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Payment Through: ",
+                          AppStrings.paymentThrough,
                           style: getSemiBoldStyle(
                               fontSize: FontSize.s14,
                               color: ColorManager.colorGreen),
@@ -112,7 +113,7 @@ class TransactionDetailsWidget extends StatelessWidget {
                         Text(
                           (transaction.transactionType.isNotEmpty
                               ? transaction.transactionType
-                              : 'Online'),
+                              : AppStrings.online),
                           style: getSemiBoldStyle(
                               fontSize: FontSize.s14,
                               color: ColorManager.colorBlack),
@@ -124,9 +125,10 @@ class TransactionDetailsWidget extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Status: ",
+                          "${AppStrings.status}: ",
                           style: getSemiBoldStyle(
-                              fontSize: 14, color: ColorManager.colorGreen),
+                              fontSize: FontSize.s14,
+                              color: ColorManager.colorGreen),
                         ),
                         Text(
                           transaction.paymentProcessStatus,
@@ -141,14 +143,14 @@ class TransactionDetailsWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Notes: ",
+                          "${AppStrings.notes}: ",
                           style: getSemiBoldStyle(
                               fontSize: FontSize.s14,
                               color: ColorManager.colorGreen),
                         ),
                         const SizedBox(height: AppSize.s10),
                         if (transaction.paymentProcessStatus ==
-                            'Completed') ...[
+                            AppStrings.completed) ...[
                           if (transaction.paymentType == 'Credit')
                             Padding(
                               padding: const EdgeInsets.only(top: 5),
@@ -161,9 +163,11 @@ class TransactionDetailsWidget extends StatelessWidget {
                                 maxLines: 1,
                               ),
                             )
-                          else if (transaction.paymentMethodName == 'Cash')
+                          else if (transaction.paymentMethodName ==
+                              AppStrings.cash)
                             Padding(
-                              padding: const EdgeInsets.only(top: 5),
+                              padding:
+                                  const EdgeInsets.only(top: AppPadding.p5),
                               child: Text(
                                 AppStrings.paymentReceivedCash,
                                 style: getRegularStyle(
@@ -174,9 +178,10 @@ class TransactionDetailsWidget extends StatelessWidget {
                               ),
                             )
                           else if (transaction.paymentMethodName ==
-                              'Bank Transfer')
+                              AppStrings.bankTransfer)
                             Padding(
-                              padding: const EdgeInsets.only(top: 5),
+                              padding:
+                                  const EdgeInsets.only(top: AppPadding.p5),
                               child: Text(
                                 AppStrings.paymentReceivedBankTransfer,
                                 style: getRegularStyle(
@@ -199,11 +204,11 @@ class TransactionDetailsWidget extends StatelessWidget {
                               ),
                             )
                         ] else if (transaction.paymentProcessStatus ==
-                            'Pending') ...[
+                            AppStrings.pending) ...[
                           Padding(
-                            padding: const EdgeInsets.only(top: 5),
+                            padding: const EdgeInsets.only(top: AppPadding.p5),
                             child: Text(
-                              transaction.paymentType == 'Credit'
+                              transaction.paymentType == AppStrings.credit
                                   ? AppStrings.refundPending
                                   : AppStrings.paymentPending,
                               style: getRegularStyle(
@@ -214,16 +219,16 @@ class TransactionDetailsWidget extends StatelessWidget {
                             ),
                           ),
                         ] else if (transaction.paymentProcessStatus ==
-                            'Failed') ...[
+                            AppStrings.failed) ...[
                           Container(
-                            padding: const EdgeInsets.only(top: 5),
+                            padding: const EdgeInsets.only(top: AppPadding.p5),
                             decoration: BoxDecoration(
                               color:
                                   ColorManager.colorRed.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(5),
+                              borderRadius: BorderRadius.circular(AppSize.s5),
                             ),
                             child: Text(
-                              transaction.paymentType == 'Credit'
+                              transaction.paymentType == AppStrings.credit
                                   ? AppStrings.refundFailed
                                   : AppStrings.paymentFailed,
                               style: getRegularStyle(

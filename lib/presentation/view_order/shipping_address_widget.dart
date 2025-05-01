@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:k_distribution/domain/model/user_model.dart';
 import 'package:k_distribution/presentation/home/address/address_card.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/styles_manager.dart';
 
 import '../resources/font_manager.dart';
@@ -21,7 +22,7 @@ class ShippingAddressWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Shipping Address",
+            AppStrings.shippingAddress,
             style: getBoldStyle(
                 fontSize: FontSize.s16, color: ColorManager.colorBlack),
           ),

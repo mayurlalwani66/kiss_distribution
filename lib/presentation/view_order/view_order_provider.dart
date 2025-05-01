@@ -3,6 +3,7 @@ import 'package:k_distribution/app/di.dart';
 import 'package:k_distribution/domain/usecase/order_usecase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../app/functions.dart';
 import '../common/freezed_data_class/freezed_data_class.dart';
 
 class ViewOrderNotifier extends StateNotifier<AsyncValue<ViewOrderState>> {
@@ -23,11 +24,58 @@ class ViewOrderNotifier extends StateNotifier<AsyncValue<ViewOrderState>> {
   Future<void> getOrderById(String id) async {
     final result = await _viewOrderUseCase.execute(id);
     state = AsyncValue.loading();
+
     result.fold((failure) {
       state = AsyncValue.error(failure.message, StackTrace.current);
     }, (data) {
+      final updatedOrder = data;
+
+      if (updatedOrder.fulfilledAmount > 0) {
+        updatedOrder.totalGrossAmount = updatedOrder.orderDetails
+            .map((e) => e.fulfilledAmount)
+            .fold(0.0, (a, b) => a + b);
+      } else {
+        updatedOrder.totalGrossAmount = updatedOrder.orderDetails
+            .where((e) =>
+                e.status != 'Cancelled' && updatedOrder.status != 'Cancelled')
+            .map((e) => e.finalPrice)
+            .fold(0.0, (a, b) => a + b);
+      }
+
+      // Compute oldGrossAmount
+      updatedOrder.oldGrossAmount = updatedOrder.orderDetails
+          .map((e) => (e.orderedQuantity)! * (e.price))
+          .fold(0.0, (a, b) => a + b);
+
+      // Update each order detail
+      updatedOrder.orderDetails = updatedOrder.orderDetails.map((orderDetail) {
+        final quantity = orderDetail.status == 'Cancelled'
+            ? (orderDetail.orderedQuantity)
+            : (orderDetail.orderFulfilledQuantity ??
+                orderDetail.orderedQuantity);
+
+        orderDetail.totalPrice = (orderDetail.price) * quantity!;
+
+        final matchingUnits = updatedOrder.unitList
+            .where((u) => u.group == orderDetail.selectedUnit?.group)
+            .toList();
+
+        orderDetail.displayOrderedQuantity = getDisplayUnit(
+          matchingUnits,
+          orderDetail.orderedQuantity ?? 0,
+        );
+
+        orderDetail.displayOrderFulfilledQuantity = getDisplayUnit(
+          matchingUnits,
+          orderDetail.orderFulfilledQuantity ?? 0,
+        );
+
+        return orderDetail;
+      }).toList();
+
+      // Update state
       final current = state.valueOrNull ?? const ViewOrderState();
-      state = AsyncValue.data(current.copyWith(viewOrder: data));
+      state = AsyncValue.data(current.copyWith(viewOrder: updatedOrder));
     });
   }
 

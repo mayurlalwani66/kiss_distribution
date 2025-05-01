@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
 
 class StarRatingWidget extends StatefulWidget {
@@ -52,7 +53,7 @@ class _StarRatingWidgetState extends State<StarRatingWidget> {
             Padding(
               padding: EdgeInsets.only(top: AppPadding.p8),
               child: Text(
-                'Rating is required (minimum 1 star)',
+                AppStrings.ratingIsRequired,
                 style: TextStyle(color: ColorManager.colorRed),
               ),
             ),

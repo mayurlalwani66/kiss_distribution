@@ -23,7 +23,6 @@ class FeedbackListCard extends StatelessWidget {
         onTap();
       },
       child: Container(
-        height: AppSize.s60,
         padding: const EdgeInsets.all(AppPadding.p10),
         margin: EdgeInsets.only(bottom: AppMargin.m5),
         decoration: BoxDecoration(
@@ -53,7 +52,9 @@ class FeedbackListCard extends StatelessWidget {
             )),
             const SizedBox(width: AppSize.s8),
             if (feedbackTitle.imgUrl.isNotEmpty)
-              Image.asset(feedbackTitle.imgUrl, height: AppSize.s30),
+              Image.asset(feedbackTitle.imgUrl, height: AppSize.s30)
+            else
+              SizedBox(height: AppSize.s40),
           ],
         ),
       ),

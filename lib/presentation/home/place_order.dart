@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:k_distribution/app/extension.dart';
 
@@ -37,7 +36,7 @@ class PlaceOrder extends StatelessWidget {
                       color: ColorManager.colorBlack, fontSize: FontSize.s16)),
               IconButton(
                   onPressed: () {
-                    context.router.pop();
+                    Navigator.pop(context);
                   },
                   icon: Icon(Icons.close))
             ],

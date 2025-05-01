@@ -1,13 +1,13 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:k_distribution/app/extension.dart';
 import 'package:k_distribution/domain/model/order_model.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
 import 'package:k_distribution/presentation/resources/font_manager.dart';
-import 'package:k_distribution/presentation/resources/routes_manager.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/styles_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
 
+import '../view_order/view_order.dart';
 import 'cancel_order.dart';
 
 class OrderListCard extends StatelessWidget {
@@ -20,28 +20,38 @@ class OrderListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = _getBadgeStyle(order.orderStatus);
     return Container(
-      padding: EdgeInsets.fromLTRB(10, 15, 15, 15),
-      margin: EdgeInsets.only(top: 5.0),
+      padding: EdgeInsets.fromLTRB(
+          AppPadding.p10, AppPadding.p15, AppPadding.p15, AppPadding.p15),
+      margin: EdgeInsets.only(top: AppMargin.m5),
       decoration: BoxDecoration(color: ColorManager.colorWhite),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              RichText(
-                text: TextSpan(
-                  text: 'No. : ',
-                  style: getRegularStyle(
-                      fontSize: FontSize.s16,
-                      color: ColorManager.colorDarkBlue),
-                  children: [
-                    TextSpan(
-                      text: order.orderNo,
-                      style: getBoldStyle(
-                          fontSize: FontSize.s16,
-                          color: ColorManager.colorBlack),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (ctx) =>
+                              ViewOrderScreen(orderId: '${order.id}')));
+                },
+                child: RichText(
+                  text: TextSpan(
+                    text: 'No. : ',
+                    style: getRegularStyle(
+                        fontSize: FontSize.s16,
+                        color: ColorManager.colorDarkBlue),
+                    children: [
+                      TextSpan(
+                        text: order.orderNo,
+                        style: getBoldStyle(
+                            fontSize: FontSize.s16,
+                            color: ColorManager.colorBlack),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Container(
@@ -90,8 +100,9 @@ class OrderListCard extends StatelessWidget {
                                 useSafeArea: true,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(10.0),
-                                        topRight: Radius.circular(10.0))),
+                                        topLeft: Radius.circular(AppSize.s10),
+                                        topRight:
+                                            Radius.circular(AppSize.s10))),
                                 context: context,
                                 builder: (context) {
                                   return CancelOrder();
@@ -108,7 +119,7 @@ class OrderListCard extends StatelessWidget {
                                     width: AppSize.s1,
                                     color: ColorManager.colorRed)),
                             child: Text(
-                              "Cancel Order",
+                              AppStrings.cancelOrder,
                               style: getRegularStyle(
                                   fontSize: FontSize.s14,
                                   color: ColorManager.colorWhite),
@@ -119,11 +130,14 @@ class OrderListCard extends StatelessWidget {
                   : Container(),
               InkWell(
                   onTap: () {
-                    context.router
-                        .push(ViewOrderRoute(orderId: order.id.toString()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (ctx) =>
+                                ViewOrderScreen(orderId: '${order.id}')));
                   },
                   child: Text(
-                    "View Summary >",
+                    AppStrings.viewSummary,
                     style: getRegularStyle(
                         color: ColorManager.colorBrown, fontSize: FontSize.s14),
                   ))
@@ -136,27 +150,27 @@ class OrderListCard extends StatelessWidget {
 
   BadgeStyle _getBadgeStyle(String status) {
     switch (status) {
-      case 'New':
+      case AppStrings.statusNew:
         return BadgeStyle(
             ColorManager.colorLightGray4, ColorManager.colorPrimary);
-      case 'Accepted':
-      case 'Packed':
+      case AppStrings.accepted:
+      case AppStrings.packed:
         return BadgeStyle(
             ColorManager.colorLightYellow, ColorManager.colorYellow);
-      case 'PackingInProcess':
+      case AppStrings.packingInProcess:
         return BadgeStyle(
             ColorManager.colorLightBlack, ColorManager.colorBlack);
-      case 'Completed':
+      case AppStrings.completed:
         return BadgeStyle(
             ColorManager.colorLightGreen, ColorManager.colorGreen);
-      case 'Cancelled':
+      case AppStrings.cancelled:
         return BadgeStyle(ColorManager.colorLightRed, ColorManager.colorRed);
-      case 'Rejected':
+      case AppStrings.rejected:
         return BadgeStyle(ColorManager.colorLightRed, ColorManager.colorRed);
-      case 'Delivering':
+      case AppStrings.delivering:
         return BadgeStyle(
             ColorManager.colorLightOrange, ColorManager.colorOrange);
-      case 'Draft':
+      case AppStrings.draft:
         return BadgeStyle(
             ColorManager.colorLighterBlue, ColorManager.colorLightBlue);
       default:

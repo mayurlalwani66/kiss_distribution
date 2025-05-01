@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/domain/model/user_model.dart';
@@ -6,7 +5,6 @@ import 'package:k_distribution/domain/usecase/user_usecase.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/custom_dialog.dart';
-import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
 import 'package:k_distribution/presentation/edit_profile.dart/custom_checkbox.dart';
 import 'package:k_distribution/presentation/home/address/address_card.dart';
 import 'package:k_distribution/presentation/home/address/address_form.dart';
@@ -28,19 +26,17 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final shipping = ref.watch(shippingAddressProvider);
+    final shippingState = ref.watch(shippingAddressProvider);
 
-    return shipping.when(
-      loading: () => const CircularProgressWidget(),
-      error: (error, _) => ErrorTextWidget(error: error.toString()),
-      data: (shipping) {
-        final addresses = shipping!.shippingAddresses;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    List<ShippingAddress> addresses =
+        shippingState.value?.shippingAddresses ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _header(context),
+        const SizedBox(height: AppSize.s10),
+        Stack(
           children: [
-            _header(context),
-            const SizedBox(height: AppSize.s10),
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -52,9 +48,10 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                 return addressCard(address, context);
               },
             ),
+            if (shippingState.isLoading) CircularProgressWidget()
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -90,7 +87,11 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                         isFromHomeScreen: false,
                         shippingData: address,
                       ),
-                    );
+                    ).then((changed) {
+                      ref
+                          .read(shippingAddressProvider.notifier)
+                          .getAllShippingAddress();
+                    });
                   },
                 ),
                 PopupMenuItem(
@@ -106,7 +107,7 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                           return CustomDialog(
                               message: AppStrings
                                   .deleteShippingAddressConfirmationMsg,
-                              onTapNo: () => context.pop(),
+                              onTapNo: () => Navigator.pop(context, false),
                               onTapYes: () {
                                 ref
                                     .watch(shippingAddressProvider.notifier)
@@ -115,10 +116,12 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                                             address.id!, address.userId),
                                         context);
                               });
-                        }).then((_) {
-                      ref
-                          .read(shippingAddressProvider.notifier)
-                          .getAllShippingAddress();
+                        }).then((changed) {
+                      if (changed == true) {
+                        ref
+                            .read(shippingAddressProvider.notifier)
+                            .getAllShippingAddress();
+                      }
                     });
                   },
                 ),
@@ -150,20 +153,17 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
             padding: const EdgeInsets.symmetric(
                 horizontal: AppPadding.p15, vertical: AppPadding.p10),
           ),
-          onPressed: () {
-            showModalBottomSheet(
-                isScrollControlled: true,
-                enableDrag: false,
-                isDismissible: false,
-                useSafeArea: true,
-                context: context,
-                builder: (ctx) {
-                  return AddressForm();
-                }).then((_) {
-              ref
-                  .read(shippingAddressProvider.notifier)
-                  .getAllShippingAddress();
-            });
+          onPressed: () async {
+            await showModalBottomSheet<bool>(
+              isScrollControlled: true,
+              enableDrag: false,
+              isDismissible: false,
+              useSafeArea: true,
+              context: context,
+              builder: (ctx) => AddressForm(),
+            );
+
+            ref.watch(shippingAddressProvider.notifier).getAllShippingAddress();
           },
           child: Text(
             AppStrings.addAddress,
@@ -175,20 +175,23 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
     );
   }
 
-  void _onMarkDefault(address) async {
-    if (address.isDefault) return;
+  void _onMarkDefault(ShippingAddress address) async {
+    final notifier = ref.read(shippingAddressProvider.notifier);
 
-    setState(() {
-      selectedId = address.id;
-    });
-
-    await ref
-        .read(markAsDefaultProvider.notifier)
-        .markAsDefault(address.id!)
-        .then((_) {
-      ref
-          .read(shippingAddressProvider.notifier)
-          .updateDefaultLocally(address.id!);
-    });
+    if (address.isDefault == true) {
+      await ref
+          .read(markAsDefaultProvider.notifier)
+          .markAsDefault(address.id!)
+          .then((_) {
+        notifier.removeDefaultLocally();
+      });
+    } else {
+      await ref
+          .read(markAsDefaultProvider.notifier)
+          .markAsDefault(address.id!)
+          .then((_) {
+        notifier.updateDefaultLocally(address.id!);
+      });
+    }
   }
 }

@@ -150,4 +150,86 @@ class AppStrings {
       "Are you sure you want to update my profile?";
   static const String deleteShippingAddressConfirmationMsg =
       "Are you sure you want to delete this Shipping Address?";
+  static const String addressRequiredMsg =
+      "Address is required. click 'Add Address' first.";
+
+  static const String retry = "Retry";
+  static const String cancelOrder = "Cancel Order";
+  static const String viewSummary = "View Summary >";
+  static const String cancelReason = "Cancel Reason";
+  static const String enterNotes = "Enter Notes";
+  static const String statusNew = "New";
+  static const String accepted = "Accepted";
+  static const String packed = "Packed";
+  static const String packingInProcess = "PackingInProcess";
+  static const String completed = "Completed";
+  static const String cancelled = "Cancelled";
+  static const String rejected = "Rejected";
+  static const String delivering = "Delivering";
+  static const String draft = "Draft";
+  static const String orderDetails = "Order Details";
+  static const String orderNotFound = "Order not found!";
+  static const String cancel = "Cancel";
+  static const String cancelOrderConfirmationMsg =
+      "Are you sure to cancel this order Item?";
+  static const String no = "No";
+  static const String yes = "Yes";
+
+  static const String happyFeedback =
+      "I am very happy with the all ordered items and delivery.";
+  static const String disappointedFeedback =
+      "I am disappointed with some order items but the delivery experience was as expected.";
+  static const String deliveryLateFeedback =
+      "I am satisfied with ordered items but delivery was not on time.";
+  static const String notLikedFeedback =
+      "I didn't like neither ordered items nor delivery.";
+  static const String otherFeedback = "Other";
+  static const String rateAndSelectFeedback =
+      "Please rate and select feedback type.";
+  static const String shipmentDetails = "Shipment Details";
+  static const String providerName = "Provider Name";
+  static const String deliveryAmount = "Delivery Amount";
+  static const String deliveryDate = "Delivery Date";
+  static const String parcelHeight = "Parcel Height (In cm)";
+  static const String parcelWidth = "Parcel Width (In cm)";
+  static const String parcelWeight = "Parcel Weight (In kg)";
+  static const String parcelLength = "Parcel Length (In cm)";
+  static const String uniqueId = "Unique ID";
+  static const String trackingLink = "Tracking Link";
+  static const String isCod = "Is COD";
+  static const String status = "Status";
+  static const String notes = "Notes";
+  static const String sourceAddress = "Source Address";
+  static const String district = "District";
+  static const String city = "City";
+  static const String sourcePhoneNumberOne = "Source PhoneNumber One";
+  static const String sourcePhoneNumberTwo = "Source PhoneNumber Two";
+  static const String referenceNo = "Reference No : ";
+  static const String cash = "Cash";
+  static const String cashOnDelivery = "| Cash On Delivery";
+  static const String bankTransfer = "Bank Transfer";
+  static const String online = "| Online";
+  static const String credit = "Credit";
+  static const String refunded = "refunded";
+  static const String paid = "paid";
+  static const String paymentThrough = "Payment Through: ";
+  static const String pending = "Pending";
+  static const String failed = "Failed";
+  static const String netAmount = "Net Amount :";
+  static const String price = "Price :";
+  static const String discount = "Discount :";
+  static const String tax = "Tax :";
+  static const String quantity = "Qty : ";
+  static const String pickup = "Pickup";
+  static const String shippingAddress = "Shipping Address";
+  static const String billingAddress = "Billing Address";
+  static const String orderCreatedDate = "Order Created Date:";
+  static const String lastOrderUpdate = "Last Order Update:";
+  static const String paymentStatus = "Payment Status:";
+  static const String orderType = "Order Type:";
+  static const String orderStatus = "Order Status:";
+  static const String name = "Name:";
+  static const String note = "Note:";
+  static const String delivery = "Delivery";
+  static const String ratingIsRequired = "Rating is required";
 }

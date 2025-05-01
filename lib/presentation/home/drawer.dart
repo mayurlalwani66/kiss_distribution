@@ -1,10 +1,10 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/app/extension.dart';
 import 'package:k_distribution/presentation/resources/routes_manager.dart';
 
 import '../../app/di.dart';
+import '../../domain/model/user_model.dart';
 import '../common/common_provider/user_provider.dart';
 import '../resources/assets_manager.dart';
 import '../resources/color_manager.dart';
@@ -18,10 +18,10 @@ class DrawerView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userDetail = ref.watch(userProvider).value;
+    User? userDetail = ref.watch(userProvider).value;
 
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.75,
+      width: MediaQuery.of(context).size.width * AppSize.s0_75,
       child: Drawer(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -86,7 +86,7 @@ class DrawerView extends ConsumerWidget {
                                   color: ColorManager.colorWhite,
                                   fontSize: FontSize.s12),
                             ),
-                            if (userDetail.phoneNumber != null) ...[
+                            ...[
                               const SizedBox(height: AppSize.s10),
                               Text(
                                 userDetail.phoneNumber.toCapitalize(),
@@ -98,7 +98,9 @@ class DrawerView extends ConsumerWidget {
                             const Spacer(),
                             GestureDetector(
                               onTap: () {
-                                context.router.push(EditProfileRoute());
+                                Navigator.pop(context);
+                                Navigator.pushNamed(
+                                    context, Routes.editProfileRoute);
                               },
                               child: Container(
                                 width: AppSize.s100,
@@ -126,16 +128,17 @@ class DrawerView extends ConsumerWidget {
                     ],
                   ),
                   Positioned(
-                      top: 0,
-                      right: 0,
+                      top: AppSize.s0,
+                      right: AppSize.s0,
                       child: InkWell(
                         onTap: () => Navigator.of(context).pop(),
-                        borderRadius: BorderRadius.circular(50),
+                        borderRadius: BorderRadius.circular(AppSize.s50),
                         child: Container(
-                          height: 30,
-                          width: 30,
+                          height: AppSize.s30,
+                          width: AppSize.s30,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.11),
+                            color:
+                                ColorManager.colorWhite.withValues(alpha: 0.11),
                             borderRadius: BorderRadius.circular(50),
                           ),
                           child: Icon(
@@ -159,8 +162,8 @@ class DrawerView extends ConsumerWidget {
                   style: getBoldStyle(
                       color: ColorManager.colorBlack, fontSize: FontSize.s16)),
               onTap: () {
-                context.router.push(EditProfileRoute());
-                context.router.pop();
+                Navigator.pop(context);
+                Navigator.pushNamed(context, Routes.editProfileRoute);
               },
             ),
             ListTile(
@@ -173,8 +176,8 @@ class DrawerView extends ConsumerWidget {
                   style: getBoldStyle(
                       color: ColorManager.colorBlack, fontSize: FontSize.s16)),
               onTap: () {
-                context.router.push(OrderListRoute());
-                context.router.pop();
+                Navigator.pop(context);
+                Navigator.pushNamed(context, Routes.orderListRoute);
               },
             ),
             ListTile(
@@ -188,7 +191,7 @@ class DrawerView extends ConsumerWidget {
                       color: ColorManager.colorBlack, fontSize: FontSize.s16)),
               onTap: () {
                 ref.read(appPreferencesProvider).removeToken();
-                context.replaceRoute(LoginRoute());
+                Navigator.pushReplacementNamed(context, Routes.loginRoute);
               },
             ),
           ],

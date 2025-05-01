@@ -36,7 +36,7 @@ class OrderInformationWidget extends StatelessWidget {
   final double addtionalDeliveryCharge;
   final VoidCallback? onCallSupport;
   final String lastOrderUpdate;
-  final String orderNote;
+  final String? orderNote;
 
   @override
   Widget build(BuildContext context) {
@@ -66,25 +66,27 @@ class OrderInformationWidget extends StatelessWidget {
             onCallSupport: onCallSupport,
           ),
           const SizedBox(height: AppSize.s12),
-          _infoRow("No:", orderNo),
-          _infoRow("Order Created Date:", orderCreateDate.toFormattedString()),
+          _infoRow("${AppStrings.no}:", orderNo),
+          _infoRow(
+              AppStrings.orderCreatedDate, orderCreateDate.toFormattedString()),
           if (lastOrderUpdate != "")
             Column(
               children: [
-                _infoRow("Last Order Update:", lastOrderUpdate),
+                _infoRow(AppStrings.lastOrderUpdate, lastOrderUpdate),
               ],
             ),
-          _infoRow("Payment Status:", paymentStatus),
-          _infoRow("Order Type:", orderType),
-          _infoRow("Order Status:", orderStatus),
-          _infoRow("Name:", userName),
-          if (userPhoneNo.isNotEmpty) _infoRow("Phone Number:", userPhoneNo),
-          if (orderNote.isNotEmpty || orderNote != "")
+          _infoRow(AppStrings.paymentStatus, paymentStatus),
+          _infoRow(AppStrings.orderType, orderType),
+          _infoRow(AppStrings.orderStatus, orderStatus),
+          _infoRow(AppStrings.name, userName),
+          if (userPhoneNo.isNotEmpty)
+            _infoRow("${AppStrings.phoneNumber}:", userPhoneNo),
+          if (orderNote!.isNotEmpty || orderNote != "")
             Padding(
               padding: EdgeInsets.symmetric(vertical: AppPadding.p10),
               child: Column(
                 children: [
-                  Text("Note:",
+                  Text(AppStrings.note,
                       style: getSemiBoldStyle(
                           fontSize: FontSize.s14,
                           color: ColorManager.colorBlack)),

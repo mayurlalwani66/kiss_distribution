@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:k_distribution/app/extension.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 import '../../domain/model/order_model.dart';
@@ -25,131 +27,138 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(top: AppMargin.m4),
-      padding: EdgeInsets.all(AppPadding.p15),
+      margin: const EdgeInsets.only(top: AppMargin.m4),
+      padding: const EdgeInsets.all(AppPadding.p15),
       decoration: BoxDecoration(color: ColorManager.colorWhite),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text.rich(
-                TextSpan(
-                  text: orderDetail.productName,
-                  style: getSemiBoldStyle(
-                      color: ColorManager.colorBlack, fontSize: FontSize.s14),
-                  children: orderDetail.attributes.expand((attr) {
-                    return [
-                      TextSpan(
-                        text: ' | ${attr.name}: ',
-                        style: getRegularStyle(
-                          fontSize: FontSize.s12,
-                          color: ColorManager.colorTextFieldLabel,
-                        ),
-                      ),
-                      ...attr.productAttributeValues.map((val) {
-                        return TextSpan(
-                          text: '${val.name} ',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF7C7D7E),
-                          ),
-                        );
-                      })
-                    ];
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: AppSize.s20),
-              Wrap(spacing: 8, runSpacing: 4, children: [
-                if (orderDetail.totalPrice > 0)
-                  Text(
-                    "Net Amount : ${(orderDetail.totalPrice)}",
-                    style: getRegularStyle(
-                        color: ColorManager.colorBrown, fontSize: FontSize.s12),
-                  ),
-                if ((orderDetail.price *
-                        (orderDetail.selectedUnit?.adjustQuantity ?? 0)) >
-                    0)
-                  Text(
-                    "Price : ${(orderDetail.price * (orderDetail.selectedUnit?.adjustQuantity ?? 0))} / ${orderDetail.selectedUnit?.name ?? ''}",
-                    style: getRegularStyle(
-                        color: ColorManager.colorBrown, fontSize: FontSize.s12),
-                  ),
-                if (orderDetail.discountAmount > 0)
-                  Text(
-                    "Discount : ${(orderDetail.discountAmount)}",
-                    style: getRegularStyle(
-                        color: ColorManager.colorBrown, fontSize: FontSize.s12),
-                  ),
-              ]),
-              if (orderDetail.sgst > 0 ||
-                  orderDetail.cgst > 0 ||
-                  orderDetail.igst > 0 ||
-                  orderDetail.utgst > 0)
-                Text(
-                  "Tax : \$${(orderDetail.sgst + orderDetail.cgst + orderDetail.igst + orderDetail.utgst)}",
-                  style: getRegularStyle(
-                      fontSize: FontSize.s12, color: ColorManager.colorBrown),
-                ),
-              const SizedBox(height: AppSize.s20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "\$${(orderDetail.fulfilledAmount > 0 ? orderDetail.fulfilledAmount : orderDetail.finalPrice)}",
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    text: orderDetail.productName,
                     style: getSemiBoldStyle(
-                        fontSize: FontSize.s14, color: ColorManager.colorBlack),
-                  ),
-                  const SizedBox(width: AppSize.s100),
-                  RichText(
-                    text: TextSpan(
-                      style: DefaultTextStyle.of(context).style,
-                      children: [
+                        color: ColorManager.colorBlack, fontSize: FontSize.s14),
+                    children: orderDetail.attributes.expand((attr) {
+                      return [
                         TextSpan(
-                          text: "Qty : ",
-                          style: getBoldStyle(
-                              color: ColorManager.colorBlack,
-                              fontSize: FontSize.s14),
+                          text: ' | ${attr.name}: ',
+                          style: getRegularStyle(
+                            fontSize: FontSize.s12,
+                            color: ColorManager.colorTextFieldLabel,
+                          ),
                         ),
-                        if (orderDetail.orderFulfilledQuantity > 0 &&
-                            orderDetail.orderedQuantity !=
-                                orderDetail.orderFulfilledQuantity) ...[
-                          TextSpan(
-                            text: orderDetail.displayOrderedQuantity,
-                            style:
-                                getRegularStyle(color: ColorManager.colorBlack),
-                          ),
-                          TextSpan(
-                            text: orderDetail.displayOrderFulfilledQuantity,
-                            style:
-                                getRegularStyle(color: ColorManager.colorGreen),
-                          ),
-                        ] else ...[
-                          TextSpan(
-                            text: orderDetail.displayOrderedQuantity,
-                            style:
-                                getRegularStyle(color: ColorManager.colorBlack),
-                          ),
-                        ],
-                      ],
+                        ...attr.productAttributeValues.map((val) {
+                          return TextSpan(
+                            text: '${val.name} ',
+                            style: getRegularStyle(
+                              fontSize: FontSize.s12,
+                              color: ColorManager.colorTextFieldLabel,
+                            ),
+                          );
+                        })
+                      ];
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: AppSize.s20),
+                Wrap(spacing: AppSize.s8, runSpacing: AppSize.s4, children: [
+                  if (orderDetail.totalPrice > 0)
+                    Text(
+                      "${AppStrings.netAmount} ${(orderDetail.totalPrice)}",
+                      style: getRegularStyle(
+                          color: ColorManager.colorBrown,
+                          fontSize: FontSize.s12),
                     ),
-                  )
-                ],
-              ),
-            ],
+                  if ((orderDetail.price *
+                          (orderDetail.selectedUnit?.adjustQuantity ?? 0)) >
+                      0)
+                    Text(
+                      "${AppStrings.price} ${(orderDetail.price * (orderDetail.selectedUnit?.adjustQuantity ?? 0))} / ${orderDetail.selectedUnit?.name ?? ''}",
+                      style: getRegularStyle(
+                          color: ColorManager.colorBrown,
+                          fontSize: FontSize.s12),
+                    ),
+                  if (orderDetail.discountAmount > 0)
+                    Text(
+                      "${AppStrings.discount} ${(orderDetail.discountAmount)}",
+                      style: getRegularStyle(
+                          color: ColorManager.colorBrown,
+                          fontSize: FontSize.s12),
+                    ),
+                ]),
+                if (orderDetail.sgst > 0 ||
+                    orderDetail.cgst > 0 ||
+                    orderDetail.igst > 0 ||
+                    orderDetail.utgst > 0)
+                  Text(
+                    "${AppStrings.tax} \$${(orderDetail.sgst + orderDetail.cgst + orderDetail.igst + orderDetail.utgst).roundToTwo()}",
+                    style: getRegularStyle(
+                        fontSize: FontSize.s12, color: ColorManager.colorBrown),
+                  ),
+                const SizedBox(height: AppSize.s20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "\$${(orderDetail.fulfilledAmount > 0 ? orderDetail.fulfilledAmount : orderDetail.finalPrice)}",
+                      style: getSemiBoldStyle(
+                          fontSize: FontSize.s14,
+                          color: ColorManager.colorBlack),
+                    ),
+                    RichText(
+                      text: TextSpan(
+                        style: getRegularStyle(
+                            color: ColorManager.colorBlack,
+                            fontSize: FontSize.s14),
+                        children: [
+                          TextSpan(
+                            text: AppStrings.quantity,
+                            style: getRegularStyle(
+                                color: ColorManager.colorBlack,
+                                fontSize: FontSize.s14),
+                          ),
+                          if (orderDetail.orderFulfilledQuantity! > 0 &&
+                              orderDetail.orderedQuantity !=
+                                  orderDetail.orderFulfilledQuantity) ...[
+                            TextSpan(
+                              text: orderDetail.displayOrderedQuantity,
+                              style: getRegularStyle(
+                                  color: ColorManager.colorBlack),
+                            ),
+                            TextSpan(
+                              text: orderDetail.displayOrderFulfilledQuantity,
+                              style: getRegularStyle(
+                                  color: ColorManager.colorGreen),
+                            ),
+                          ] else ...[
+                            TextSpan(
+                              text: orderDetail.displayOrderedQuantity,
+                              style: getRegularStyle(
+                                  color: ColorManager.colorBlack),
+                            ),
+                          ],
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            ),
           ),
-          if (orderDetail.status == 'New' &&
-              orderDetail.status != 'Cancelled' &&
+          if (orderDetail.status == AppStrings.statusNew &&
+              orderDetail.status != AppStrings.cancelled &&
               canCancelOrder &&
               canCancelOrderItems)
             TextButton(
               onPressed: () => onCancelDetails(orderDetail.id),
-              child: const Text(
-                "Cancel",
+              child: Text(
+                AppStrings.cancel,
                 style: TextStyle(
-                  color: Colors.red,
+                  color: ColorManager.colorRed,
                   fontWeight: FontWeight.bold,
                 ),
               ),

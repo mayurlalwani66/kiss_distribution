@@ -1,12 +1,11 @@
-import 'package:auto_route/auto_route.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/app/functions.dart';
 import 'package:k_distribution/domain/usecase/user_usecase.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
 import 'package:k_distribution/presentation/common/common_provider/user_provider.dart';
-import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
-import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
 import 'package:k_distribution/presentation/common/common_widgets/custom_textfeild.dart';
 import '../../common/common_provider/form_data_provider.dart';
 import '../../common/common_widgets/common_elevated_button.dart';
@@ -43,11 +42,12 @@ class _AddressFormState extends ConsumerState<AddressForm> {
   @override
   void initState() {
     super.initState();
-    final addressProvider = ref.read(shippingAddressProvider.notifier);
 
     Future.microtask(() {
-      addressProvider.getAllShippingAddress();
-      addressProvider.getAllStates();
+      ref
+          .read(formDataControlKeyProvider.notifier)
+          .getDynamicFormDataByControlKeys(ref);
+      ref.read(shippingAddressProvider.notifier).getAllStates();
     });
     showCurrentData();
   }
@@ -66,7 +66,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
 
   @override
   Widget build(BuildContext context) {
-    var addressProvider = ref.watch(shippingAddressProvider.notifier);
+    final addressProvider = ref.watch(shippingAddressProvider.notifier);
     User? userdetails = ref.read(userProvider).asData?.value;
 
     return FractionallySizedBox(
@@ -76,7 +76,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
           top: AppPadding.p16,
           left: AppPadding.p12,
           right: AppPadding.p12,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + AppSize.s16,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +127,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                       await addressProvider.getAllShippingAddress();
 
                       if (context.mounted) {
-                        context.router.pop();
+                        Navigator.pop(context, true);
                       }
                     }
                   }),
@@ -142,6 +142,8 @@ class _AddressFormState extends ConsumerState<AddressForm> {
     var formdata = ref.read(formDataStoreProvider);
 
     return SingleChildScrollView(
+        physics:
+            Platform.isIOS ? ClampingScrollPhysics() : ClampingScrollPhysics(),
         child: Padding(
             padding: const EdgeInsets.only(top: AppPadding.p10),
             child: Form(
@@ -250,7 +252,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
           onChanged: (value) => setState(() => isDefault = !isDefault),
         ),
         Text(
-          "Mark As Default",
+          AppStrings.markAsDefault,
           style: getBoldStyle(
             color: ColorManager.colorBlack,
             fontSize: FontSize.s14,
@@ -272,7 +274,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
           ),
         ),
         IconButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, false),
           icon: const Icon(Icons.close),
         ),
       ],
@@ -280,34 +282,26 @@ class _AddressFormState extends ConsumerState<AddressForm> {
   }
 
   Widget statesDropdown() {
-    var shippingState = ref.watch(shippingAddressProvider);
-    return shippingState.when(
-      data: (data) {
-        return DropdownButtonFormField<String>(
-          value: selectedState.isEmpty ? null : selectedState,
-          isDense: true,
-          dropdownColor: ColorManager.colorWhite,
-          hint: Text(AppStrings.enterYourState),
-          items: data?.states
-              .map((state) => DropdownMenuItem<String>(
-                    alignment: Alignment.center,
-                    value: state.value,
-                    child: Text(state.name),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedState = value!;
-            });
-          },
-          validator: (value) =>
-              (value == null || value.isEmpty) ? AppStrings.stateError : null,
-        );
+    var states = ref.watch(shippingAddressProvider).value?.states ?? [];
+    return DropdownButtonFormField<String>(
+      value: selectedState.isEmpty ? null : selectedState,
+      isDense: true,
+      dropdownColor: ColorManager.colorWhite,
+      hint: Text(AppStrings.enterYourState),
+      items: states
+          .map((state) => DropdownMenuItem<String>(
+                alignment: Alignment.center,
+                value: state.value,
+                child: Text(state.name),
+              ))
+          .toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedState = value!;
+        });
       },
-      loading: () => CircularProgressWidget(),
-      error: (error, stackTrace) {
-        return ErrorTextWidget(error: error.toString());
-      },
+      validator: (value) =>
+          (value == null || value.isEmpty) ? AppStrings.stateError : null,
     );
   }
 
@@ -344,7 +338,8 @@ class _AddressFormState extends ConsumerState<AddressForm> {
       onTap: onTap,
       child: Container(
         alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppPadding.p15, vertical: AppPadding.p8),
         decoration: BoxDecoration(
           color: isSelected
               ? ColorManager.colorPrimary

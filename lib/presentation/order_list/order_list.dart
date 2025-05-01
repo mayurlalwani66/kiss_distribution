@@ -1,4 +1,5 @@
-import 'package:auto_route/auto_route.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/presentation/common/common_provider/form_data_provider.dart';
@@ -14,7 +15,6 @@ import '../resources/strings_manager.dart';
 import '../resources/styles_manager.dart';
 import '../resources/values_manager.dart';
 
-@RoutePage()
 class OrderListScreen extends ConsumerStatefulWidget {
   const OrderListScreen({super.key});
 
@@ -39,7 +39,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
           automaticallyImplyLeading: false,
           title: GestureDetector(
             onTap: () {
-              context.router.pop();
+              Navigator.pop(context);
             },
             child: Row(
               children: [
@@ -54,7 +54,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
           ),
           titleTextStyle: getBoldStyle(
               color: ColorManager.colorBlack, fontSize: FontSize.s16),
-          titleSpacing: 0,
+          titleSpacing: AppSize.s0,
         ),
         body: allOrdersProvider.when(
           error: (error, stackTrace) =>
@@ -62,6 +62,9 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
           loading: () => CircularProgressWidget(),
           data: (data) {
             return ListView.builder(
+                physics: Platform.isIOS
+                    ? ClampingScrollPhysics()
+                    : ClampingScrollPhysics(),
                 itemCount: data.length,
                 itemBuilder: (context, index) {
                   var order = data[index];

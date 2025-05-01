@@ -27,27 +27,27 @@ class _FeedbackWidgetState extends State<FeedbackWidget> {
 
   final List<FeedbackTitle> feedbackTitles = [
     FeedbackTitle(
-      'I am very happy with the all ordered items and delivery.',
+      AppStrings.happyFeedback,
       false,
       ImageAssets.happyImg,
     ),
     FeedbackTitle(
-      'I am disappointed with some order items but the delivery experience was as expected.',
+      AppStrings.disappointedFeedback,
       false,
       ImageAssets.dissapointedImg,
     ),
     FeedbackTitle(
-      'I am satisfied with ordered items but delivery was not on time.',
+      AppStrings.deliveryLateFeedback,
       false,
       ImageAssets.deliveryNotOnTimeImg,
     ),
     FeedbackTitle(
-      'I didn\'t like neither ordered items nor delivery.',
+      AppStrings.notLikedFeedback,
       false,
       ImageAssets.noLikeImg,
     ),
     FeedbackTitle(
-      'Other',
+      AppStrings.otherFeedback,
       false,
       '',
     ),
@@ -56,7 +56,7 @@ class _FeedbackWidgetState extends State<FeedbackWidget> {
   void _submitFeedback() {
     if (_rating < 1 || _selectedTitle == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please rate and select feedback type.")),
+        SnackBar(content: Text(AppStrings.rateAndSelectFeedback)),
       );
       return;
     }

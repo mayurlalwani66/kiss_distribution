@@ -18,7 +18,7 @@ class DioFactory {
 
   Dio getDio() {
     Dio dio = Dio();
-    int _timeOut = 60 * 1000; // 1 min
+    int timeOut = 60 * 1000; // 1 min
     String language = _appPreferences.getAppLanguage();
     String token = _appPreferences.getToken();
     Map<String, String> headers = {
@@ -30,8 +30,8 @@ class DioFactory {
 
     dio.options = BaseOptions(
         baseUrl: Constant.baseUrl,
-        connectTimeout: Duration(milliseconds: _timeOut),
-        receiveTimeout: Duration(milliseconds: _timeOut),
+        connectTimeout: Duration(milliseconds: timeOut),
+        receiveTimeout: Duration(milliseconds: timeOut),
         headers: headers);
 
     if (kReleaseMode) {

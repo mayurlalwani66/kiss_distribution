@@ -129,10 +129,10 @@ class OrderDetails {
   num utgst;
   int id;
   num memberDiscount;
-  num orderFulfilledQuantity;
+  num? orderFulfilledQuantity;
   String displayOrderFulfilledQuantity;
   DateTime orderStatusUpdateDate;
-  num orderedQuantity;
+  num? orderedQuantity;
   String displayOrderedQuantity;
   String parentCategoryName;
   String photoUrl;

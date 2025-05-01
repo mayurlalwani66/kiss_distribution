@@ -1,8 +1,11 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:k_distribution/data/network/error_handler.dart';
 import 'package:k_distribution/domain/model/order_model.dart';
+import 'package:k_distribution/domain/model/user_model.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
+import 'package:k_distribution/presentation/common/common_widgets/app_snakbar.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
 import 'package:k_distribution/presentation/home/address/address_form.dart';
@@ -15,12 +18,13 @@ import 'package:k_distribution/presentation/home/place_order.dart';
 import 'package:k_distribution/presentation/home/product_list.dart';
 import 'package:k_distribution/presentation/resources/assets_manager.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
-import 'package:k_distribution/presentation/resources/routes_manager.dart';
+import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
+import 'package:k_distribution/presentation/view_order/view_order.dart';
 import '../../domain/usecase/product_usecase.dart';
+import '../common/common_widgets/no_internet_widget.dart';
 import '../common/freezed_data_class/freezed_data_class.dart';
 
-@RoutePage()
 class HomeScreen extends ConsumerStatefulWidget {
   final List<OrderDetails>? orderDetails;
   const HomeScreen({super.key, this.orderDetails});
@@ -31,11 +35,19 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomeScreen> {
   int cartQty = 0;
-
+  bool hasInternet = true;
   @override
   void initState() {
     super.initState();
-    Future.microtask(_bind);
+    Future.microtask(_checkInternetAndBind);
+  }
+
+  Future<void> _checkInternetAndBind() async {
+    hasInternet = await InternetConnection().hasInternetAccess;
+    if (hasInternet) {
+      await _bind();
+    }
+    setState(() {});
   }
 
   Future<void> _bind() async {
@@ -50,7 +62,7 @@ class _HomePageState extends ConsumerState<HomeScreen> {
           0, '', 0, false, [], 1, 1, 1000, '', 'desc', '', "PUBLISHED"),
     );
 
-    if (ref.read(shippingAddressProvider).asData?.value?.selectedAddress !=
+    if (ref.read(shippingAddressProvider).asData?.value.selectedAddress !=
         null) {
       await homeProvider.getAllShippingCharges();
     }
@@ -60,18 +72,20 @@ class _HomePageState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _showAddressBottomSheet(BuildContext context, ShippingState shipping) {
+  void _showAddressBottomSheet(
+      BuildContext context,
+      List<ShippingAddress> shippingAddresses,
+      ShippingAddress? selectedAddress) {
     final notifier = ref.watch(shippingAddressProvider.notifier);
 
-    if (shipping.selectedAddress != null) {
+    if (selectedAddress != null) {
       showModalBottomSheet(
         isScrollControlled: true,
         enableDrag: false,
         isDismissible: false,
         useSafeArea: true,
         context: context,
-        builder: (ctx) =>
-            ChangeAddress(shippingAddresses: shipping.shippingAddresses),
+        builder: (ctx) => ChangeAddress(shippingAddresses: shippingAddresses),
       );
     } else {
       showModalBottomSheet(
@@ -92,14 +106,21 @@ class _HomePageState extends ConsumerState<HomeScreen> {
         totalAmount: homeProvider.getTotalAmount(),
         shippingCharges: homeProvider.getShippingCharge(),
         onTap: () async {
+          if (ref.read(homePageProvider).hasError) {
+            AppSnackbar.show(
+                context, ref.read(homePageProvider).error.toString());
+            return;
+          }
           await homeProvider.createOrderApi();
           final orderId = homeProvider.getOrderId();
           if (orderId != null || orderId != 0) {
             if (context.mounted) {
-              context.router.pop();
-              context.router
-                  .push(ViewOrderRoute(orderId: "$orderId"))
-                  .then((_) {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (ctx) =>
+                          ViewOrderScreen(orderId: '$orderId'))).then((_) {
                 homeProvider.resetCartQuantities();
                 cartQty = 0;
               });
@@ -131,13 +152,18 @@ class _HomePageState extends ConsumerState<HomeScreen> {
                 totalItems: homeProvider.getTotalItems(),
                 grandTotal: homeProvider.getGrandTotal(),
               ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildShippingSection(context, shippingState),
-            _buildProductList(homePageState, homeProvider),
-          ],
-        ),
+        body: hasInternet
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildShippingSection(
+                      context,
+                      shippingState.value?.shippingAddresses ?? [],
+                      shippingState.value?.selectedAddress),
+                  _buildProductList(homePageState, homeProvider),
+                ],
+              )
+            : NoInternetWidget(onRetry: _checkInternetAndBind),
       ),
     );
   }
@@ -155,45 +181,68 @@ class _HomePageState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildShippingSection(
-      BuildContext context, AsyncValue<ShippingState?> shippingState) {
-    return shippingState.when(
-      loading: () => const SizedBox(),
-      error: (error, _) => Text(error.toString()),
-      data: (shipping) => AddressPanel(
-        selectedAddress: shipping?.selectedAddress,
-        addresses: shipping?.shippingAddresses ?? [],
-        onTap: () => _showAddressBottomSheet(context, shipping!),
-      ),
+      BuildContext context,
+      List<ShippingAddress> shippingAddresses,
+      ShippingAddress? selectedAddress) {
+    return AddressPanel(
+      selectedAddress: selectedAddress,
+      addresses: shippingAddresses,
+      onTap: () =>
+          _showAddressBottomSheet(context, shippingAddresses, selectedAddress),
     );
   }
 
   Widget _buildProductList(
-    AsyncValue<HomePageState> homeState,
-    HomePageNotifier homeProvider,
-  ) {
+      AsyncValue<HomePageState> homeState, HomePageNotifier homeProvider) {
     return Expanded(
       child: homeState.when(
-        loading: () => const CircularProgressWidget(),
-        error: (error, _) => ErrorTextWidget(error: error.toString()),
+        loading: () => CircularProgressWidget(),
+        error: (error, stackTrace) => ErrorTextWidget(error: error.toString()),
         data: (products) => ProductList(
           products: products.products,
           increaseQuantity: (productId) async {
-            if (ref
+            final ctx = context;
+            final isConnected = await InternetConnection().hasInternetAccess;
+
+            if (!ctx.mounted) return;
+
+            if (!isConnected) {
+              AppSnackbar.show(ctx, ResponseMessage.NO_INTERNET_CONNECTION);
+              return;
+            }
+
+            final hasAddress = ref
                     .read(shippingAddressProvider)
                     .asData
                     ?.value
-                    ?.selectedAddress !=
-                null) {
+                    .selectedAddress !=
+                null;
+            if (hasAddress) {
               homeProvider.increment(productId);
               cartQty++;
               if (homeProvider.getShippingCharge() == 0.0 && cartQty > 0) {
                 await homeProvider.getAllShippingCharges();
               }
+            } else {
+              AppSnackbar.show(ctx, AppStrings.addressRequiredMsg);
             }
           },
-          decreaseQuantity: (productId) {
+          decreaseQuantity: (productId) async {
+            final ctx = context;
+            final isConnected = await InternetConnection().hasInternetAccess;
+
+            if (!ctx.mounted) return;
+
+            if (!isConnected) {
+              AppSnackbar.show(ctx, ResponseMessage.NO_INTERNET_CONNECTION);
+              return;
+            }
+
             cartQty--;
             homeProvider.decrement(productId);
+            if (homeProvider.getShippingCharge() > 0.0 && cartQty > 0) {
+              await homeProvider.getAllShippingCharges();
+            }
           },
           totalAmount: homeProvider.getSingleProductTotalAmount,
         ),

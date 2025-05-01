@@ -1,3 +1,5 @@
+import '../domain/model/product_model.dart';
+
 enum ProductType { previousOrder, mostLoved, menu }
 
 enum SuggestionTypes { suggestedProducts }
@@ -65,4 +67,23 @@ bool isFourDigitsPincode(String pincode) {
 
 bool isSixDigitsPincode(String pincode) {
   return RegExp(r'^[1-9][0-9]{5}$').hasMatch(pincode);
+}
+
+String getDisplayUnit(List<UnitListModel> units, num selectedQuantity) {
+  if (units == [] || units.isEmpty) {
+    return '';
+  }
+
+  List<UnitListModel> allApplicableUnits = units
+      .where((z) => z.adjustQuantity <= selectedQuantity && !z.isCustom)
+      .toList();
+
+  allApplicableUnits
+      .sort((a, b) => b.adjustQuantity.compareTo(a.adjustQuantity));
+
+  UnitListModel? lastUnit =
+      allApplicableUnits.isNotEmpty ? allApplicableUnits[0] : null;
+
+  double displayValue = selectedQuantity / (lastUnit?.adjustQuantity ?? 1);
+  return '${displayValue.toInt()} ${lastUnit?.name ?? ''}';
 }

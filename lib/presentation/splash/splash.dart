@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/presentation/resources/assets_manager.dart';
@@ -11,7 +10,6 @@ import '../common/common_provider/form_data_provider.dart';
 import '../common/common_provider/user_provider.dart';
 import '../resources/routes_manager.dart';
 
-@RoutePage()
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -38,9 +36,9 @@ class _SplashViewState extends ConsumerState<SplashScreen> {
             .read(formDataControlKeyProvider.notifier)
             .getDynamicFormDataByControlKeys(ref);
       });
-      context.replaceRoute(HomeRoute());
+      Navigator.pushReplacementNamed(context, Routes.homeRoute);
     } else {
-      context.replaceRoute(const LoginRoute());
+      Navigator.pushReplacementNamed(context, Routes.loginRoute);
     }
   }
 
