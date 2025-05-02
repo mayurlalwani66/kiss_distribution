@@ -22,6 +22,7 @@ import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
 import 'package:k_distribution/presentation/view_order/view_order.dart';
 import '../../domain/usecase/product_usecase.dart';
+import '../common/common_provider/form_data_provider.dart';
 import '../common/common_widgets/no_internet_widget.dart';
 import '../common/freezed_data_class/freezed_data_class.dart';
 
@@ -54,7 +55,6 @@ class _HomePageState extends ConsumerState<HomeScreen> {
     final homeProvider = ref.read(homePageProvider.notifier);
     final shippingProvider = ref.read(shippingAddressProvider.notifier);
     final orderDetails = widget.orderDetails;
-
     await shippingProvider.getAllShippingAddress();
     await homeProvider.getAllPaymentMethods("all");
     await homeProvider.getAllProducts(
@@ -141,7 +141,11 @@ class _HomePageState extends ConsumerState<HomeScreen> {
       child: Scaffold(
         backgroundColor: ColorManager.colorLightGray4,
         appBar: _buildAppBar(),
-        endDrawer: const DrawerView(),
+        endDrawer: DrawerView(
+          onPopToHomeScreen: () async {
+            _checkInternetAndBind();
+          },
+        ),
         endDrawerEnableOpenDragGesture: false,
         drawerScrimColor:
             ColorManager.colorWhite.withValues(alpha: AppSize.s0_65),

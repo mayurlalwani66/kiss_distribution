@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/app/extension.dart';
+import 'package:k_distribution/presentation/edit_profile.dart/edit_profile.dart';
 import 'package:k_distribution/presentation/resources/routes_manager.dart';
 
 import '../../app/di.dart';
-import '../../domain/model/user_model.dart';
-import '../common/common_provider/user_provider.dart';
+
 import '../resources/assets_manager.dart';
 import '../resources/color_manager.dart';
 import '../resources/font_manager.dart';
@@ -14,11 +14,13 @@ import '../resources/styles_manager.dart';
 import '../resources/values_manager.dart';
 
 class DrawerView extends ConsumerWidget {
-  const DrawerView({super.key});
+  DrawerView({super.key, required this.onPopToHomeScreen});
+
+  void Function() onPopToHomeScreen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    User? userDetail = ref.watch(userProvider).value;
+    final appPrefs = ref.read(appPreferencesProvider);
 
     return SizedBox(
       width: MediaQuery.of(context).size.width * AppSize.s0_75,
@@ -56,9 +58,9 @@ class DrawerView extends ConsumerWidget {
                         child: CircleAvatar(
                           radius: AppSize.s25,
                           backgroundColor: ColorManager.colorLightGray,
-                          backgroundImage: userDetail!.photoUrl.isEmpty
+                          backgroundImage: appPrefs.getUserPhotoUrl().isEmpty
                               ? AssetImage(ImageAssets.profileImg)
-                              : NetworkImage(userDetail.photoUrl)
+                              : NetworkImage(appPrefs.getUserPhotoUrl())
                                   as ImageProvider,
                         ),
                       ),
@@ -69,7 +71,7 @@ class DrawerView extends ConsumerWidget {
                           children: [
                             const SizedBox(height: AppSize.s2),
                             Text(
-                              "${userDetail.firstName} ${userDetail.lastName}"
+                              "${appPrefs.getUserFirstName()} ${appPrefs.getUserLastName()}"
                                   .toCapitalize(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -79,7 +81,7 @@ class DrawerView extends ConsumerWidget {
                             ),
                             const Spacer(),
                             Text(
-                              userDetail.email.toCapitalize(),
+                              appPrefs.getUserEmail().toCapitalize(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: getRegularStyle(
@@ -89,7 +91,7 @@ class DrawerView extends ConsumerWidget {
                             ...[
                               const SizedBox(height: AppSize.s10),
                               Text(
-                                userDetail.phoneNumber.toCapitalize(),
+                                appPrefs.getUserPhoneNumber().toCapitalize(),
                                 style: getRegularStyle(
                                     color: ColorManager.colorWhite,
                                     fontSize: FontSize.s12),
@@ -99,8 +101,16 @@ class DrawerView extends ConsumerWidget {
                             GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
-                                Navigator.pushNamed(
-                                    context, Routes.editProfileRoute);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) {
+                                    return EditProfileScreen(
+                                      onPopToHomeScreen: () {
+                                        onPopToHomeScreen();
+                                      },
+                                    );
+                                  }),
+                                );
                               },
                               child: Container(
                                 width: AppSize.s100,
@@ -163,7 +173,15 @@ class DrawerView extends ConsumerWidget {
                       color: ColorManager.colorBlack, fontSize: FontSize.s16)),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, Routes.editProfileRoute);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditProfileScreen(
+                        onPopToHomeScreen: () {
+                          onPopToHomeScreen();
+                        },
+                      ),
+                    ));
               },
             ),
             ListTile(

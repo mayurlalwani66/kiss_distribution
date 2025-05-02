@@ -2,11 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:k_distribution/data/network/error_handler.dart';
 import 'package:k_distribution/domain/usecase/user_usecase.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
 import 'package:k_distribution/presentation/common/common_provider/user_provider.dart';
+import 'package:k_distribution/presentation/common/common_widgets/app_snakbar.dart';
 import 'package:k_distribution/presentation/common/common_widgets/common_elevated_button.dart';
 import 'package:k_distribution/presentation/common/common_widgets/custom_dialog.dart';
+import 'package:k_distribution/presentation/common/common_widgets/no_internet_widget.dart';
 import 'package:k_distribution/presentation/edit_profile.dart/your_address.dart';
 import 'package:k_distribution/presentation/resources/assets_manager.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
@@ -15,11 +19,14 @@ import 'package:k_distribution/presentation/resources/routes_manager.dart';
 import 'package:k_distribution/presentation/resources/styles_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
 
+import '../../app/di.dart';
 import '../common/common_widgets/custom_textfeild.dart';
 import '../resources/strings_manager.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
-  const EditProfileScreen({super.key});
+  const EditProfileScreen({super.key, required this.onPopToHomeScreen});
+
+  final void Function() onPopToHomeScreen;
 
   @override
   ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -31,49 +38,44 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final phoneNumberController = TextEditingController();
   final phoneNumber2Controller = TextEditingController();
   final emailController = TextEditingController();
+  bool hasInternet = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _bind();
-  }
-
-  _bind() {
-    Future.microtask(() =>
-        ref.read(shippingAddressProvider.notifier).getAllShippingAddress());
+  Future<void> _checkInternetAndBind() async {
+    hasInternet = await InternetConnection().hasInternetAccess;
+    if (hasInternet) {
+      await ref.read(shippingAddressProvider.notifier).getAllShippingAddress();
+    }
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final userDetail = ref.watch(userProvider).value;
+    final appPrefs = ref.watch(appPreferencesProvider);
 
     return Scaffold(
         backgroundColor: ColorManager.colorWhite,
         appBar: AppBar(
           automaticallyImplyLeading: false,
           title: GestureDetector(
-            onTap: () {
+            onTap: () async {
+              hasInternet = await InternetConnection().hasInternetAccess;
               Navigator.pop(context);
+              widget.onPopToHomeScreen();
+              if (hasInternet) {
+                ref
+                    .read(shippingAddressProvider.notifier)
+                    .getAllShippingAddress();
+              }
             },
-            child: PopScope(
-              canPop: true,
-              onPopInvokedWithResult: (bool didPop, Object? result) {
-                if (didPop) {
-                  ref
-                      .read(shippingAddressProvider.notifier)
-                      .getAllShippingAddress();
-                }
-              },
-              child: Row(
-                children: [
-                  Container(
-                      margin: EdgeInsets.only(
-                          right: AppMargin.m8, left: AppMargin.m16),
-                      child:
-                          Image.asset(ImageAssets.backImg, width: AppSize.s10)),
-                  Text(AppStrings.yourProfile),
-                ],
-              ),
+            child: Row(
+              children: [
+                Container(
+                    margin: EdgeInsets.only(
+                        right: AppMargin.m8, left: AppMargin.m16),
+                    child:
+                        Image.asset(ImageAssets.backImg, width: AppSize.s10)),
+                Text(AppStrings.yourProfile),
+              ],
             ),
           ),
           titleTextStyle: getBoldStyle(
@@ -90,28 +92,36 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     builder: (ctx) => CustomDialog(
                         message: AppStrings.updateProfileConfirmationMsg,
                         onTapNo: () => Navigator.pop(context),
-                        onTapYes: () {
-                          ref.read(userProvider.notifier).updateUserProfile(
-                              UpdateUserUseCaseInput(
-                                  userDetail!.id,
-                                  userDetail.userName,
-                                  firstNameController.text,
-                                  lastNameController.text,
-                                  emailController.text,
-                                  userDetail.password,
-                                  phoneNumberController.text,
-                                  phoneNumber2Controller.text,
-                                  userDetail.role,
-                                  userDetail.dob,
-                                  userDetail.isTermAndConditionAccept,
-                                  userDetail.photo,
-                                  userDetail.photoUrl,
-                                  userDetail.state,
-                                  userDetail.pincode,
-                                  userDetail.isSuperAdmin,
-                                  userDetail.isSingleOrganisation));
-                          Navigator.pushReplacementNamed(
-                              context, Routes.homeRoute);
+                        onTapYes: () async {
+                          hasInternet =
+                              await InternetConnection().hasInternetAccess;
+                          if (hasInternet == false) {
+                            Navigator.pop(context);
+                            AppSnackbar.show(context,
+                                ResponseMessage.NO_INTERNET_CONNECTION);
+                          } else {
+                            ref.read(userProvider.notifier).updateUserProfile(
+                                UpdateUserUseCaseInput(
+                                    appPrefs.getUserId(),
+                                    appPrefs.getUserName(),
+                                    firstNameController.text,
+                                    lastNameController.text,
+                                    emailController.text,
+                                    appPrefs.getUserPassword(),
+                                    phoneNumberController.text,
+                                    phoneNumber2Controller.text,
+                                    appPrefs.getUserRole(),
+                                    appPrefs.getUserDob()!,
+                                    appPrefs.getUserIsTermAndConditionAccept(),
+                                    appPrefs.getUserPhoto(),
+                                    appPrefs.getUserPhotoUrl(),
+                                    appPrefs.getUserState(),
+                                    appPrefs.getUserPincode(),
+                                    appPrefs.getUserIsSuperAdmin(),
+                                    appPrefs.getUserIsSingleOrganisation()));
+                            Navigator.pushReplacementNamed(
+                                context, Routes.homeRoute);
+                          }
                         }));
               }),
         ),
@@ -138,9 +148,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: CircleAvatar(
                           radius: AppSize.s25,
                           backgroundColor: ColorManager.colorLightGray,
-                          backgroundImage: userDetail!.photoUrl.isEmpty
+                          backgroundImage: appPrefs.getUserPhotoUrl().isEmpty
                               ? AssetImage(ImageAssets.profileImg)
-                              : NetworkImage(userDetail.photoUrl),
+                              : NetworkImage(appPrefs.getUserPhotoUrl()),
                         ),
                       ),
                     ),
@@ -148,7 +158,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       label: AppStrings.firstName,
                       hintText: AppStrings.firstNameHint,
                       controller: firstNameController
-                        ..text = userDetail.firstName,
+                        ..text = appPrefs.getUserFirstName(),
                       borderColor: ColorManager.colorSoftBlue,
                       focusedBorderColor: ColorManager.colorSoftBlue,
                     ),
@@ -156,7 +166,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       label: AppStrings.lastName,
                       hintText: AppStrings.lastNameHint,
                       controller: lastNameController
-                        ..text = userDetail.lastName,
+                        ..text = appPrefs.getUserLastName(),
                       borderColor: ColorManager.colorSoftBlue,
                       focusedBorderColor: ColorManager.colorSoftBlue,
                     ),
@@ -169,7 +179,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       label: AppStrings.mobileNumber,
                       hintText: AppStrings.mobileNumerHint,
                       controller: phoneNumberController
-                        ..text = userDetail.phoneNumber,
+                        ..text = appPrefs.getUserPhoneNumber(),
                       borderColor: ColorManager.colorSoftBlue,
                       focusedBorderColor: ColorManager.colorSoftBlue,
                     ),
@@ -177,18 +187,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       label: AppStrings.alternateMobileNumer,
                       hintText: AppStrings.alternateMobileNumerHint,
                       controller: phoneNumber2Controller
-                        ..text = userDetail.phoneNumberTwo,
+                        ..text = appPrefs.getUserPhoneNumber2(),
                       borderColor: ColorManager.colorSoftBlue,
                       focusedBorderColor: ColorManager.colorSoftBlue,
                     ),
                     CustomTextFormField(
                       label: AppStrings.email,
                       hintText: AppStrings.emailHint,
-                      controller: emailController..text = userDetail.email,
+                      controller: emailController
+                        ..text = appPrefs.getUserEmail(),
                       borderColor: ColorManager.colorSoftBlue,
                       focusedBorderColor: ColorManager.colorSoftBlue,
                     ),
-                    YourAddressWidget(),
+                    hasInternet == false
+                        ? NoInternetWidget(onRetry: _checkInternetAndBind)
+                        : YourAddressWidget()
                   ],
                 ),
               ),

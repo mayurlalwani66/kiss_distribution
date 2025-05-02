@@ -27,6 +27,9 @@ class SelectAddressCard extends StatelessWidget {
         }
       },
       child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+            border: Border.all(color: ColorManager.colorTransparentWhite)),
         padding: EdgeInsets.fromLTRB(
           AppPadding.p0,
           AppPadding.p10,

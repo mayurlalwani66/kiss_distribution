@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:k_distribution/app/app_prefs.dart';
 import 'package:k_distribution/app/di.dart';
 import 'package:k_distribution/domain/usecase/user_usecase.dart';
 
@@ -7,8 +8,9 @@ import '../../../domain/model/user_model.dart';
 class UserNotifier extends StateNotifier<AsyncValue<User?>> {
   final UserUseCase _userUseCase;
   final UpdateUserUseCase _updateUserUseCase;
+  final AppPreferences _appPreferences;
 
-  UserNotifier(this._userUseCase, this._updateUserUseCase)
+  UserNotifier(this._userUseCase, this._updateUserUseCase, this._appPreferences)
       : super(const AsyncValue.loading());
 
   Future<void> getUserData() async {
@@ -22,6 +24,24 @@ class UserNotifier extends StateNotifier<AsyncValue<User?>> {
       },
       (user) {
         state = AsyncData(user);
+        _appPreferences.setUserId(user.id);
+        _appPreferences.setUserFirstName(user.firstName);
+        _appPreferences.setUserLastName(user.lastName);
+        _appPreferences.setUserPhoneNumber(user.phoneNumber);
+        _appPreferences.setUserEmail(user.email);
+        _appPreferences.setUserPassword(user.password);
+        _appPreferences.setUserName(user.userName);
+        _appPreferences.setUserRole(user.role);
+        _appPreferences.setUserDob(user.dob);
+        _appPreferences
+            .setUserIsTermAndConditionAccept(user.isTermAndConditionAccept);
+        _appPreferences.setUserPhoto(user.photo);
+        _appPreferences.setUserPhotoUrl(user.photoUrl);
+        _appPreferences.setUserState(user.state);
+        _appPreferences.setUserPincode(user.pincode);
+        _appPreferences.setUserIsSuperAdmin(user.isSuperAdmin);
+        _appPreferences.setUserIsSingleOrganisation(user.isSingleOrganisation);
+        _appPreferences.setUserPhoneNumber2(user.phoneNumberTwo);
       },
     );
   }
@@ -42,8 +62,6 @@ class UserNotifier extends StateNotifier<AsyncValue<User?>> {
 
 final userProvider =
     StateNotifierProvider<UserNotifier, AsyncValue<User?>>((ref) {
-  return UserNotifier(
-    ref.read(userUseCaseProvider),
-    ref.read(updateUserUseCaseProvider),
-  );
+  return UserNotifier(ref.read(userUseCaseProvider),
+      ref.read(updateUserUseCaseProvider), ref.read(appPreferencesProvider));
 });

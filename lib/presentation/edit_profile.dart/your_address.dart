@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:k_distribution/data/network/error_handler.dart';
 import 'package:k_distribution/domain/model/user_model.dart';
 import 'package:k_distribution/domain/usecase/user_usecase.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
+import 'package:k_distribution/presentation/common/common_widgets/app_snakbar.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/custom_dialog.dart';
 import 'package:k_distribution/presentation/edit_profile.dart/custom_checkbox.dart';
@@ -23,6 +26,26 @@ class YourAddressWidget extends ConsumerStatefulWidget {
 
 class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
   int? selectedId;
+  bool hasInternet = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInternetAndBind();
+  }
+
+  _bind() {
+    Future.microtask(() =>
+        ref.read(shippingAddressProvider.notifier).getAllShippingAddress());
+  }
+
+  Future<void> _checkInternetAndBind() async {
+    hasInternet = await InternetConnection().hasInternetAccess;
+    if (hasInternet) {
+      await _bind();
+    }
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,9 +111,7 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                         shippingData: address,
                       ),
                     ).then((changed) {
-                      ref
-                          .read(shippingAddressProvider.notifier)
-                          .getAllShippingAddress();
+                      _checkInternetAndBind();
                     });
                   },
                 ),
@@ -109,18 +130,22 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                                   .deleteShippingAddressConfirmationMsg,
                               onTapNo: () => Navigator.pop(context, false),
                               onTapYes: () {
-                                ref
-                                    .watch(shippingAddressProvider.notifier)
-                                    .deleteShippingAddress(
-                                        DeleteShippingAddressUseCaseInput(
-                                            address.id!, address.userId),
-                                        context);
+                                if (hasInternet) {
+                                  ref
+                                      .watch(shippingAddressProvider.notifier)
+                                      .deleteShippingAddress(
+                                          DeleteShippingAddressUseCaseInput(
+                                              address.id!, address.userId),
+                                          context);
+                                } else {
+                                  Navigator.pop(context, false);
+                                  AppSnackbar.show(context,
+                                      ResponseMessage.NO_INTERNET_CONNECTION);
+                                }
                               });
                         }).then((changed) {
                       if (changed == true) {
-                        ref
-                            .read(shippingAddressProvider.notifier)
-                            .getAllShippingAddress();
+                        _checkInternetAndBind();
                       }
                     });
                   },
@@ -163,7 +188,7 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
               builder: (ctx) => AddressForm(),
             );
 
-            ref.watch(shippingAddressProvider.notifier).getAllShippingAddress();
+            _checkInternetAndBind();
           },
           child: Text(
             AppStrings.addAddress,
@@ -176,22 +201,27 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
   }
 
   void _onMarkDefault(ShippingAddress address) async {
-    final notifier = ref.read(shippingAddressProvider.notifier);
-
-    if (address.isDefault == true) {
-      await ref
-          .read(markAsDefaultProvider.notifier)
-          .markAsDefault(address.id!)
-          .then((_) {
-        notifier.removeDefaultLocally();
-      });
+    hasInternet = await InternetConnection().hasInternetAccess;
+    if (hasInternet == false) {
+      AppSnackbar.show(context, ResponseMessage.NO_INTERNET_CONNECTION);
     } else {
-      await ref
-          .read(markAsDefaultProvider.notifier)
-          .markAsDefault(address.id!)
-          .then((_) {
-        notifier.updateDefaultLocally(address.id!);
-      });
+      final notifier = ref.read(shippingAddressProvider.notifier);
+
+      if (address.isDefault == true) {
+        await ref
+            .read(markAsDefaultProvider.notifier)
+            .markAsDefault(address.id!)
+            .then((_) {
+          notifier.removeDefaultLocally();
+        });
+      } else {
+        await ref
+            .read(markAsDefaultProvider.notifier)
+            .markAsDefault(address.id!)
+            .then((_) {
+          notifier.updateDefaultLocally(address.id!);
+        });
+      }
     }
   }
 }

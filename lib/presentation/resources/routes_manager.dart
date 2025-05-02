@@ -27,7 +27,8 @@ class RouteGenerator {
       case Routes.loginRoute:
         return MaterialPageRoute(builder: (_) => LoginScreen());
       case Routes.editProfileRoute:
-        return MaterialPageRoute(builder: (_) => EditProfileScreen());
+        return MaterialPageRoute(
+            builder: (_) => EditProfileScreen(onPopToHomeScreen: () {}));
 
       case Routes.orderListRoute:
         return MaterialPageRoute(builder: (_) => OrderListScreen());

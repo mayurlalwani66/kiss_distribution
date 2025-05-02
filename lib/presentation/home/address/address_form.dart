@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:k_distribution/app/app_prefs.dart';
 import 'package:k_distribution/app/functions.dart';
 import 'package:k_distribution/domain/usecase/user_usecase.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
-import 'package:k_distribution/presentation/common/common_provider/user_provider.dart';
 import 'package:k_distribution/presentation/common/common_widgets/custom_textfeild.dart';
+import '../../../app/di.dart';
 import '../../common/common_provider/form_data_provider.dart';
 import '../../common/common_widgets/common_elevated_button.dart';
 import '../../resources/assets_manager.dart';
@@ -38,37 +40,48 @@ class _AddressFormState extends ConsumerState<AddressForm> {
   String selectedState = "";
   String typeOfAddress = AppStrings.home;
   int id = 0;
+  bool hasInternet = true;
 
   @override
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      ref
-          .read(formDataControlKeyProvider.notifier)
-          .getDynamicFormDataByControlKeys(ref);
-      ref.read(shippingAddressProvider.notifier).getAllStates();
-    });
+    Future.microtask(_checkInternetAndBind);
     showCurrentData();
+  }
+
+  Future<void> _checkInternetAndBind() async {
+    hasInternet = await InternetConnection().hasInternetAccess;
+    if (hasInternet) {
+      await _bind();
+      showCurrentData();
+    }
+    setState(() {});
+  }
+
+  _bind() {
+    ref
+        .read(formDataControlKeyProvider.notifier)
+        .getDynamicFormDataByControlKeys(ref);
+    ref.read(shippingAddressProvider.notifier).getAllStates();
   }
 
   void showCurrentData() {
     if (widget.isFromHomeScreen == false) {
-      id = widget.shippingData!.id!;
-      _streetController.text = widget.shippingData!.addressLineOne;
-      _suburbController.text = widget.shippingData!.addressLineTwo;
-      _postCodeController.text = widget.shippingData!.pincode;
-      selectedState = widget.shippingData!.state;
-      typeOfAddress = widget.shippingData!.typeOfAddress;
-      isDefault = widget.shippingData!.isDefault;
+      id = widget.shippingData?.id ?? 0;
+      _streetController.text = widget.shippingData?.addressLineOne ?? "";
+      _suburbController.text = widget.shippingData?.addressLineTwo ?? "";
+      _postCodeController.text = widget.shippingData?.pincode ?? "";
+      selectedState = widget.shippingData?.state ?? "";
+      typeOfAddress = widget.shippingData?.typeOfAddress ?? AppStrings.home;
+      isDefault = widget.shippingData?.isDefault ?? false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final addressProvider = ref.watch(shippingAddressProvider.notifier);
-    User? userdetails = ref.read(userProvider).asData?.value;
-
+    final appPrefs = ref.watch(appPreferencesProvider);
     return FractionallySizedBox(
       heightFactor: AppSize.s0_9,
       child: Padding(
@@ -83,7 +96,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
           children: [
             formHeader(context),
             Expanded(
-              child: formFeilds(userdetails!),
+              child: formFeilds(appPrefs),
             ),
             Padding(
               padding: const EdgeInsets.only(
@@ -93,41 +106,43 @@ class _AddressFormState extends ConsumerState<AddressForm> {
               child: CommonElevatedButton(
                   text: AppStrings.submit,
                   onTap: () async {
-                    if (_formKey.currentState!.validate()) {
-                      if (widget.isFromHomeScreen == true) {
-                        await addressProvider.addShippingAddress(
-                            AddShippingAddressInput(
-                                _receiverNameController.text,
-                                _phoneNumberController.text,
-                                _postCodeController.text,
-                                selectedState,
-                                _streetController.text,
-                                _suburbController.text,
-                                typeOfAddress,
-                                userdetails.id,
-                                isDefault,
-                                true));
-                      } else {
-                        await addressProvider.updateShippingAddress(
-                            UpdateShippingAddressUseCaseInput(
-                                "${widget.shippingData?.id}",
-                                id,
-                                _receiverNameController.text,
-                                _phoneNumberController.text,
-                                _postCodeController.text,
-                                selectedState,
-                                _streetController.text,
-                                _suburbController.text,
-                                typeOfAddress,
-                                userdetails.id,
-                                isDefault,
-                                true));
-                      }
+                    if (hasInternet) {
+                      if (_formKey.currentState!.validate()) {
+                        if (widget.isFromHomeScreen == true) {
+                          await addressProvider.addShippingAddress(
+                              AddShippingAddressInput(
+                                  _receiverNameController.text,
+                                  _phoneNumberController.text,
+                                  _postCodeController.text,
+                                  selectedState,
+                                  _streetController.text,
+                                  _suburbController.text,
+                                  typeOfAddress,
+                                  appPrefs.getUserId(),
+                                  isDefault,
+                                  true));
+                        } else {
+                          await addressProvider.updateShippingAddress(
+                              UpdateShippingAddressUseCaseInput(
+                                  "${widget.shippingData?.id}",
+                                  id,
+                                  _receiverNameController.text,
+                                  _phoneNumberController.text,
+                                  _postCodeController.text,
+                                  selectedState,
+                                  _streetController.text,
+                                  _suburbController.text,
+                                  typeOfAddress,
+                                  appPrefs.getUserId(),
+                                  isDefault,
+                                  true));
+                        }
 
-                      await addressProvider.getAllShippingAddress();
+                        await addressProvider.getAllShippingAddress();
 
-                      if (context.mounted) {
-                        Navigator.pop(context, true);
+                        if (context.mounted) {
+                          Navigator.pop(context, true);
+                        }
                       }
                     }
                   }),
@@ -138,7 +153,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
     );
   }
 
-  Widget formFeilds(User userdetails) {
+  Widget formFeilds(AppPreferences appPrefs) {
     var formdata = ref.read(formDataStoreProvider);
 
     return SingleChildScrollView(
@@ -186,7 +201,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                       hintText: AppStrings.receiverName,
                       controller: _receiverNameController
                         ..text =
-                            "${userdetails.firstName} ${userdetails.lastName}",
+                            "${appPrefs.getUserFirstName()} ${appPrefs.getUserLastName()}",
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return AppStrings.fullNameError;
@@ -199,7 +214,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                       label: AppStrings.phoneNumber,
                       hintText: AppStrings.phoneNumber,
                       controller: _phoneNumberController
-                        ..text = userdetails.phoneNumber,
+                        ..text = appPrefs.getUserPhoneNumber(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return AppStrings.phoneNumberError;

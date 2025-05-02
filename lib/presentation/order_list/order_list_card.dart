@@ -12,9 +12,13 @@ import 'cancel_order.dart';
 
 class OrderListCard extends StatelessWidget {
   const OrderListCard(
-      {super.key, required this.order, required this.canCancelOrder});
+      {super.key,
+      required this.order,
+      required this.canCancelOrder,
+      required this.getOrderList});
   final OrderListingModel order;
   final bool canCancelOrder;
+  final void Function() getOrderList;
 
   @override
   Widget build(BuildContext context) {
@@ -131,10 +135,13 @@ class OrderListCard extends StatelessWidget {
               InkWell(
                   onTap: () {
                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (ctx) =>
-                                ViewOrderScreen(orderId: '${order.id}')));
+                            context,
+                            MaterialPageRoute(
+                                builder: (ctx) =>
+                                    ViewOrderScreen(orderId: '${order.id}')))
+                        .then((_) {
+                      getOrderList.call();
+                    });
                   },
                   child: Text(
                     AppStrings.viewSummary,

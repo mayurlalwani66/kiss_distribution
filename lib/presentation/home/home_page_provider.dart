@@ -119,10 +119,6 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
       state = AsyncValue.error("No address selected", StackTrace.current);
       return;
     }
-    for (var orderDetail in getOrderDetails()) {
-      print(
-          "${orderDetail.productId},${orderDetail.orderedQuantity},${orderDetail.totalAmount} ");
-    }
 
     final result = await ref.read(createOrderUseCaseProvider).execute(
         CreateOrderUseCaseInput(
@@ -190,8 +186,6 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
           product.cartQty++;
           updateCart(product);
         }
-        print(productId);
-        print(product.id);
         return product;
       }).toList();
       return homePageState;
@@ -305,7 +299,7 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
         for (var product in homePageState.products) {
           if (product.id == item.productId) {
             product.cartQty = item.orderedQuantity?.toInt() ?? 0;
-            print("sdsdsdsd=> ${product.cartQty}");
+            updateCart(product);
           }
         }
         return homePageState;
