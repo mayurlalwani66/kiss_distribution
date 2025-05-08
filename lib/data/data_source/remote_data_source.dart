@@ -67,6 +67,8 @@ abstract class RemoteDataSource {
   Future<BaseResponse<ShippingAddressResponse, ShippingAddressResponse>>
       updateUserShippingAddress(
           String addressId, ShippingAddress shippingAddress);
+
+  Future<BaseResponse<LoginResponse, String>> loginWithQrCode(String token);
 }
 
 class RemoteDataSourceImpl extends RemoteDataSource {
@@ -230,5 +232,11 @@ class RemoteDataSourceImpl extends RemoteDataSource {
         shippingAddress.typeOfAddress,
         shippingAddress.isDefault,
         shippingAddress.userId);
+  }
+
+  @override
+  Future<BaseResponse<LoginResponse, String>> loginWithQrCode(
+      String token) async {
+    return await _appServiceClient.loginWithQrCode(token);
   }
 }

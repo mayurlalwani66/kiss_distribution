@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:k_distribution/data/network/error_handler.dart';
 import 'package:k_distribution/domain/model/user_model.dart';
 import 'package:k_distribution/domain/usecase/user_usecase.dart';
@@ -8,6 +7,7 @@ import 'package:k_distribution/presentation/common/common_provider/shipping_prov
 import 'package:k_distribution/presentation/common/common_widgets/app_snakbar.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
 import 'package:k_distribution/presentation/common/common_widgets/custom_dialog.dart';
+import 'package:k_distribution/presentation/common/freezed_data_class/freezed_data_class.dart';
 import 'package:k_distribution/presentation/edit_profile.dart/custom_checkbox.dart';
 import 'package:k_distribution/presentation/home/address/address_card.dart';
 import 'package:k_distribution/presentation/home/address/address_form.dart';
@@ -26,25 +26,15 @@ class YourAddressWidget extends ConsumerStatefulWidget {
 
 class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
   int? selectedId;
-  bool hasInternet = true;
 
   @override
   void initState() {
     super.initState();
-    _checkInternetAndBind();
   }
 
   _bind() {
     Future.microtask(() =>
         ref.read(shippingAddressProvider.notifier).getAllShippingAddress());
-  }
-
-  Future<void> _checkInternetAndBind() async {
-    hasInternet = await InternetConnection().hasInternetAccess;
-    if (hasInternet) {
-      await _bind();
-    }
-    setState(() {});
   }
 
   @override
@@ -53,32 +43,37 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
 
     List<ShippingAddress> addresses =
         shippingState.value?.shippingAddresses ?? [];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        _header(context),
-        const SizedBox(height: AppSize.s10),
-        Stack(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: addresses.length,
-              separatorBuilder: (_, __) => const Divider(),
-              itemBuilder: (context, index) {
-                final address = addresses[index];
+            _header(context),
+            const SizedBox(height: AppSize.s10),
+            Stack(
+              children: [
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: addresses.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final address = addresses[index];
 
-                return addressCard(address, context);
-              },
+                    return addressCard(address, context, shippingState);
+                  },
+                ),
+                if (shippingState.isLoading) CircularProgressWidget()
+              ],
             ),
-            if (shippingState.isLoading) CircularProgressWidget()
           ],
         ),
       ],
     );
   }
 
-  Widget addressCard(ShippingAddress address, BuildContext context) {
+  Widget addressCard(ShippingAddress address, BuildContext context,
+      AsyncValue<ShippingState> shippingState) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -111,7 +106,7 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                         shippingData: address,
                       ),
                     ).then((changed) {
-                      _checkInternetAndBind();
+                      if (changed == true) _bind();
                     });
                   },
                 ),
@@ -125,27 +120,53 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
                     showDialog(
                         context: context,
                         builder: (ctx) {
-                          return CustomDialog(
-                              message: AppStrings
-                                  .deleteShippingAddressConfirmationMsg,
-                              onTapNo: () => Navigator.pop(context, false),
-                              onTapYes: () {
-                                if (hasInternet) {
-                                  ref
-                                      .watch(shippingAddressProvider.notifier)
-                                      .deleteShippingAddress(
-                                          DeleteShippingAddressUseCaseInput(
-                                              address.id!, address.userId),
-                                          context);
-                                } else {
-                                  Navigator.pop(context, false);
-                                  AppSnackbar.show(context,
-                                      ResponseMessage.NO_INTERNET_CONNECTION);
-                                }
-                              });
+                          return Consumer(builder: (context, ref, _) {
+                            return Stack(
+                              children: [
+                                CustomDialog(
+                                    message: AppStrings
+                                        .deleteShippingAddressConfirmationMsg,
+                                    onTapNo: () =>
+                                        Navigator.pop(context, false),
+                                    onTapYes: () {
+                                      if (shippingState.error.toString() ==
+                                          ResponseMessage
+                                              .NO_INTERNET_CONNECTION) {
+                                        ref
+                                            .watch(shippingAddressProvider
+                                                .notifier)
+                                            .deleteShippingAddress(
+                                                DeleteShippingAddressUseCaseInput(
+                                                    address.id!,
+                                                    address.userId),
+                                                context);
+                                      } else {
+                                        Navigator.pop(context, false);
+                                        AppSnackbar.show(
+                                            context,
+                                            ResponseMessage
+                                                .NO_INTERNET_CONNECTION);
+                                      }
+                                    }),
+                                if (ref
+                                        .watch(shippingAddressProvider)
+                                        .value
+                                        ?.screenLoader ==
+                                    true)
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: ColorManager
+                                              .colorTransparentWhite),
+                                      child: CircularProgressWidget(),
+                                    ),
+                                  )
+                              ],
+                            );
+                          });
                         }).then((changed) {
                       if (changed == true) {
-                        _checkInternetAndBind();
+                        _bind();
                       }
                     });
                   },
@@ -186,9 +207,11 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
               useSafeArea: true,
               context: context,
               builder: (ctx) => AddressForm(),
-            );
-
-            _checkInternetAndBind();
+            ).then((changed) {
+              if (changed == true) {
+                _bind();
+              }
+            });
           },
           child: Text(
             AppStrings.addAddress,
@@ -201,8 +224,8 @@ class _YourAddressWidgetState extends ConsumerState<YourAddressWidget> {
   }
 
   void _onMarkDefault(ShippingAddress address) async {
-    hasInternet = await InternetConnection().hasInternetAccess;
-    if (hasInternet == false) {
+    if (ref.watch(markAsDefaultProvider).error.toString() ==
+        ResponseMessage.NO_INTERNET_CONNECTION) {
       AppSnackbar.show(context, ResponseMessage.NO_INTERNET_CONNECTION);
     } else {
       final notifier = ref.read(shippingAddressProvider.notifier);

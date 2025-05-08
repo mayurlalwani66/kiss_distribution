@@ -142,4 +142,8 @@ abstract class AppServiceClient {
     @Field("isDefault") bool isDefault,
     @Field("userId") int userId,
   );
+
+  @POST("/NativeApp/loginWithQrCode")
+  Future<BaseResponse<LoginResponse, String>> loginWithQrCode(
+      @Field("qrCode") String token);
 }

@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:k_distribution/app/app_prefs.dart';
 import 'package:k_distribution/data/data_source/remote_data_source.dart';
 import 'package:k_distribution/data/network/app_api.dart';
 import 'package:k_distribution/data/network/dio_factory.dart';
+import 'package:k_distribution/data/network/network_info.dart';
 import 'package:k_distribution/data/repository/auth_repository_impl.dart';
 import 'package:k_distribution/data/repository/order_repository_impl.dart';
 import 'package:k_distribution/data/repository/product_repository_impl.dart';
@@ -41,21 +43,24 @@ final appServiceClientProvider = Provider<AppServiceClient>(
 final remoteDataSourceProvider = Provider<RemoteDataSource>(
     (ref) => RemoteDataSourceImpl(ref.watch(appServiceClientProvider)));
 
+final networkInfoProvider = Provider<NetworkInfo>(
+    (ref) => NetworkInfoImpl(InternetConnection.createInstance()));
+
 // auth repository
-final authRepositoryProvider =
-    Provider((ref) => AuthRepositoryImpl(ref.watch(remoteDataSourceProvider)));
+final authRepositoryProvider = Provider((ref) => AuthRepositoryImpl(
+    ref.watch(remoteDataSourceProvider), ref.watch(networkInfoProvider)));
 
 // user repository
-final userRepositoryProvider =
-    Provider((ref) => UserRepositoryImpl(ref.watch(remoteDataSourceProvider)));
+final userRepositoryProvider = Provider((ref) => UserRepositoryImpl(
+    ref.watch(remoteDataSourceProvider), ref.watch(networkInfoProvider)));
 
 // product repository
-final productRepositoryProvider = Provider(
-    (ref) => ProductRepositoryImpl(ref.watch(remoteDataSourceProvider)));
+final productRepositoryProvider = Provider((ref) => ProductRepositoryImpl(
+    ref.watch(remoteDataSourceProvider), ref.watch(networkInfoProvider)));
 
 // order repository
-final orderRepositoryProvider =
-    Provider((ref) => OrderRepositoryImpl(ref.watch(remoteDataSourceProvider)));
+final orderRepositoryProvider = Provider((ref) => OrderRepositoryImpl(
+    ref.watch(remoteDataSourceProvider), ref.watch(networkInfoProvider)));
 
 final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
   final repository = ref.watch(authRepositoryProvider);
@@ -157,4 +162,9 @@ final updateShippingAddressUseCaseProvider =
     Provider<UpdateShippingAddressUseCase>((ref) {
   final repository = ref.watch(userRepositoryProvider);
   return UpdateShippingAddressUseCase(repository);
+});
+
+final loginWithQrUseCaseProvider = Provider<LoginWithQrUseCase>((ref) {
+  final repository = ref.watch(authRepositoryProvider);
+  return LoginWithQrUseCase(repository);
 });

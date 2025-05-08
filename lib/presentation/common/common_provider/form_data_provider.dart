@@ -14,6 +14,8 @@ class FormDataNotifier extends StateNotifier<AsyncValue<List<SettingValue?>>> {
   FormDataNotifier(this._dynamicFormUseCase) : super(AsyncValue.data([]));
 
   Future<void> getDynamicFormDataByControlKeys(WidgetRef ref) async {
+    state = AsyncValue.loading();
+
     final store = ref.read(formDataStoreProvider);
 
     final appSettingKeys = AppSettingsEnum.values.map((e) => e.name);

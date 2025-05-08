@@ -2,14 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:k_distribution/data/network/error_handler.dart';
 import 'package:k_distribution/presentation/common/common_provider/form_data_provider.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
-import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
 import 'package:k_distribution/presentation/common/common_widgets/no_internet_widget.dart';
 import 'package:k_distribution/presentation/order_list/order_list_card.dart';
 import 'package:k_distribution/presentation/order_list/order_list_provider.dart';
 
+import '../common/common_widgets/error_retry_widget.dart';
 import '../resources/assets_manager.dart';
 import '../resources/color_manager.dart';
 import '../resources/font_manager.dart';
@@ -25,28 +25,20 @@ class OrderListScreen extends ConsumerStatefulWidget {
 }
 
 class _OrderListScreenState extends ConsumerState<OrderListScreen> {
-  bool hasInternet = false;
   @override
   void initState() {
     super.initState();
-    _checkInternetAndBind();
+    _bind();
   }
 
   _bind() {
     ref.read(orderListProvider.notifier).getAllMyOrders();
   }
 
-  Future<void> _checkInternetAndBind() async {
-    hasInternet = await InternetConnection().hasInternetAccess;
-    if (hasInternet) {
-      await _bind();
-    }
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     final allOrdersProvider = ref.watch(orderListProvider);
+    final allOrdersNotifier = ref.watch(orderListProvider.notifier);
     final canCancelOrder = ref.watch(formDataStoreProvider).canCancelOrder;
     return Scaffold(
         backgroundColor: ColorManager.colorLightGray4,
@@ -71,29 +63,40 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
               color: ColorManager.colorBlack, fontSize: FontSize.s16),
           titleSpacing: AppSize.s0,
         ),
-        body: hasInternet == false
-            ? NoInternetWidget(onRetry: _checkInternetAndBind)
-            : allOrdersProvider.when(
-                error: (error, stackTrace) =>
-                    ErrorTextWidget(error: error.toString()),
-                loading: () => CircularProgressWidget(),
-                data: (data) {
-                  return ListView.builder(
-                      physics: Platform.isIOS
-                          ? ClampingScrollPhysics()
-                          : ClampingScrollPhysics(),
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        var order = data[index];
-                        return OrderListCard(
-                          order: order,
-                          canCancelOrder: canCancelOrder,
-                          getOrderList: () {
-                            _checkInternetAndBind();
-                          },
-                        );
-                      });
+        body: allOrdersProvider.when(
+          error: (error, stackTrace) {
+            if (error.toString() == ResponseMessage.NO_INTERNET_CONNECTION) {
+              return NoInternetWidget(
+                onRetry: () {
+                  allOrdersNotifier.getAllMyOrders();
                 },
-              ));
+              );
+            }
+            return ErrorRetryWidget(
+              message: error.toString(),
+              onRetry: () {
+                allOrdersNotifier.getAllMyOrders();
+              },
+            );
+          },
+          loading: () => CircularProgressWidget(),
+          data: (data) {
+            return ListView.builder(
+                physics: Platform.isIOS
+                    ? ClampingScrollPhysics()
+                    : ClampingScrollPhysics(),
+                itemCount: data.length,
+                itemBuilder: (context, index) {
+                  var order = data[index];
+                  return OrderListCard(
+                    order: order,
+                    canCancelOrder: canCancelOrder,
+                    getOrderList: () {
+                      _bind();
+                    },
+                  );
+                });
+          },
+        ));
   }
 }

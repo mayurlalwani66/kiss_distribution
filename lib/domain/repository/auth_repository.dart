@@ -6,4 +6,5 @@ import '../../data/request/request.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, Authentication>> login(LoginRequest loginRequest);
+  Future<Either<Failure, Authentication>> loginWithQrCode(String token);
 }

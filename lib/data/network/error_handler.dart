@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import 'failure.dart';
@@ -16,23 +18,28 @@ enum DataSource {
   SEND_TIMEOUT,
   CACHE_ERROR,
   NO_INTERNET_CONNECTION,
-  DEFAULT,
   BAD_CERTIFICATE,
+  DEFAULT,
 }
 
 class ErrorHandler implements Exception {
-  late Failure failure;
+  late final Failure failure;
+
   ErrorHandler.handle(dynamic error) {
     if (error is DioException) {
-      // Handling API response errors
-      failure = _handleError(error);
+      failure = _handleDioError(error);
+    } else if (error is SocketException) {
+      failure = DataSource.NO_INTERNET_CONNECTION.getFailure();
+    } else if (error is FormatException) {
+      failure = Failure(ResponseCode.DEFAULT, "Bad response format");
+    } else if (error is Failure) {
+      failure = error;
     } else {
-      // Default error case
       failure = DataSource.DEFAULT.getFailure();
     }
   }
 
-  Failure _handleError(DioException error) {
+  Failure _handleDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
         return DataSource.CONNECT_TIMEOUT.getFailure();
@@ -47,22 +54,29 @@ class ErrorHandler implements Exception {
       case DioExceptionType.badCertificate:
         return DataSource.BAD_CERTIFICATE.getFailure();
       case DioExceptionType.badResponse:
-        switch (error.response?.statusCode) {
+        final statusCode = error.response?.statusCode;
+        final dynamic data = error.response?.data;
+
+        String serverMessage = data is Map && data.containsKey('message')
+            ? data['message'].toString()
+            : ResponseMessage.DEFAULT;
+
+        switch (statusCode) {
           case ResponseCode.BAD_REQUEST:
-            return DataSource.BAD_REQUEST.getFailure();
-          case ResponseCode.FORBIDDEN:
-            return DataSource.FORBIDDEN.getFailure();
+            return Failure(statusCode!, serverMessage);
           case ResponseCode.UNAUTHORISED:
-            return DataSource.UNAUTHORISED.getFailure();
+            return Failure(statusCode!, serverMessage);
+          case ResponseCode.FORBIDDEN:
+            return Failure(statusCode!, serverMessage);
           case ResponseCode.NOT_FOUND:
-            return DataSource.NOT_FOUND.getFailure();
+            return Failure(statusCode!, serverMessage);
           case ResponseCode.INTERNAL_SERVER_ERROR:
-            return DataSource.INTERNAL_SERVER_ERROR.getFailure();
+            return Failure(statusCode!, serverMessage);
           default:
-            return DataSource.DEFAULT.getFailure();
+            return Failure(statusCode ?? ResponseCode.DEFAULT, serverMessage);
         }
       case DioExceptionType.unknown:
-        return DataSource.DEFAULT.getFailure();
+        return DataSource.NO_INTERNET_CONNECTION.getFailure();
     }
   }
 }

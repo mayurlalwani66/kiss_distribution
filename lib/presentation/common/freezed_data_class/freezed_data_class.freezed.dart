@@ -19,6 +19,7 @@ mixin _$HomePageState {
   List<ShippingCharge> get shippingCharges;
   List<PaymentMethod> get paymentMethods;
   List<ShippingAddress> get shippingAddresses;
+  bool get screenLoader;
   CreateOrderResponse? get createOrderResponse;
 
   /// Create a copy of HomePageState
@@ -41,6 +42,8 @@ mixin _$HomePageState {
                 .equals(other.paymentMethods, paymentMethods) &&
             const DeepCollectionEquality()
                 .equals(other.shippingAddresses, shippingAddresses) &&
+            (identical(other.screenLoader, screenLoader) ||
+                other.screenLoader == screenLoader) &&
             (identical(other.createOrderResponse, createOrderResponse) ||
                 other.createOrderResponse == createOrderResponse));
   }
@@ -52,11 +55,12 @@ mixin _$HomePageState {
       const DeepCollectionEquality().hash(shippingCharges),
       const DeepCollectionEquality().hash(paymentMethods),
       const DeepCollectionEquality().hash(shippingAddresses),
+      screenLoader,
       createOrderResponse);
 
   @override
   String toString() {
-    return 'HomePageState(products: $products, shippingCharges: $shippingCharges, paymentMethods: $paymentMethods, shippingAddresses: $shippingAddresses, createOrderResponse: $createOrderResponse)';
+    return 'HomePageState(products: $products, shippingCharges: $shippingCharges, paymentMethods: $paymentMethods, shippingAddresses: $shippingAddresses, screenLoader: $screenLoader, createOrderResponse: $createOrderResponse)';
   }
 }
 
@@ -71,6 +75,7 @@ abstract mixin class $HomePageStateCopyWith<$Res> {
       List<ShippingCharge> shippingCharges,
       List<PaymentMethod> paymentMethods,
       List<ShippingAddress> shippingAddresses,
+      bool screenLoader,
       CreateOrderResponse? createOrderResponse});
 }
 
@@ -91,6 +96,7 @@ class _$HomePageStateCopyWithImpl<$Res>
     Object? shippingCharges = null,
     Object? paymentMethods = null,
     Object? shippingAddresses = null,
+    Object? screenLoader = null,
     Object? createOrderResponse = freezed,
   }) {
     return _then(_self.copyWith(
@@ -110,6 +116,10 @@ class _$HomePageStateCopyWithImpl<$Res>
           ? _self.shippingAddresses
           : shippingAddresses // ignore: cast_nullable_to_non_nullable
               as List<ShippingAddress>,
+      screenLoader: null == screenLoader
+          ? _self.screenLoader
+          : screenLoader // ignore: cast_nullable_to_non_nullable
+              as bool,
       createOrderResponse: freezed == createOrderResponse
           ? _self.createOrderResponse
           : createOrderResponse // ignore: cast_nullable_to_non_nullable
@@ -126,6 +136,7 @@ class _HomePageState implements HomePageState {
       final List<ShippingCharge> shippingCharges = const [],
       final List<PaymentMethod> paymentMethods = const [],
       final List<ShippingAddress> shippingAddresses = const [],
+      this.screenLoader = false,
       this.createOrderResponse})
       : _products = products,
         _shippingCharges = shippingCharges,
@@ -170,6 +181,9 @@ class _HomePageState implements HomePageState {
   }
 
   @override
+  @JsonKey()
+  final bool screenLoader;
+  @override
   final CreateOrderResponse? createOrderResponse;
 
   /// Create a copy of HomePageState
@@ -192,6 +206,8 @@ class _HomePageState implements HomePageState {
                 .equals(other._paymentMethods, _paymentMethods) &&
             const DeepCollectionEquality()
                 .equals(other._shippingAddresses, _shippingAddresses) &&
+            (identical(other.screenLoader, screenLoader) ||
+                other.screenLoader == screenLoader) &&
             (identical(other.createOrderResponse, createOrderResponse) ||
                 other.createOrderResponse == createOrderResponse));
   }
@@ -203,11 +219,12 @@ class _HomePageState implements HomePageState {
       const DeepCollectionEquality().hash(_shippingCharges),
       const DeepCollectionEquality().hash(_paymentMethods),
       const DeepCollectionEquality().hash(_shippingAddresses),
+      screenLoader,
       createOrderResponse);
 
   @override
   String toString() {
-    return 'HomePageState(products: $products, shippingCharges: $shippingCharges, paymentMethods: $paymentMethods, shippingAddresses: $shippingAddresses, createOrderResponse: $createOrderResponse)';
+    return 'HomePageState(products: $products, shippingCharges: $shippingCharges, paymentMethods: $paymentMethods, shippingAddresses: $shippingAddresses, screenLoader: $screenLoader, createOrderResponse: $createOrderResponse)';
   }
 }
 
@@ -224,6 +241,7 @@ abstract mixin class _$HomePageStateCopyWith<$Res>
       List<ShippingCharge> shippingCharges,
       List<PaymentMethod> paymentMethods,
       List<ShippingAddress> shippingAddresses,
+      bool screenLoader,
       CreateOrderResponse? createOrderResponse});
 }
 
@@ -244,6 +262,7 @@ class __$HomePageStateCopyWithImpl<$Res>
     Object? shippingCharges = null,
     Object? paymentMethods = null,
     Object? shippingAddresses = null,
+    Object? screenLoader = null,
     Object? createOrderResponse = freezed,
   }) {
     return _then(_HomePageState(
@@ -263,6 +282,10 @@ class __$HomePageStateCopyWithImpl<$Res>
           ? _self._shippingAddresses
           : shippingAddresses // ignore: cast_nullable_to_non_nullable
               as List<ShippingAddress>,
+      screenLoader: null == screenLoader
+          ? _self.screenLoader
+          : screenLoader // ignore: cast_nullable_to_non_nullable
+              as bool,
       createOrderResponse: freezed == createOrderResponse
           ? _self.createOrderResponse
           : createOrderResponse // ignore: cast_nullable_to_non_nullable
@@ -276,6 +299,7 @@ mixin _$ShippingState {
   List<ShippingAddress> get shippingAddresses;
   List<States> get states;
   ShippingAddress? get selectedAddress;
+  bool get screenLoader;
 
   /// Create a copy of ShippingState
   /// with the given fields replaced by the non-null parameter values.
@@ -294,7 +318,9 @@ mixin _$ShippingState {
                 .equals(other.shippingAddresses, shippingAddresses) &&
             const DeepCollectionEquality().equals(other.states, states) &&
             (identical(other.selectedAddress, selectedAddress) ||
-                other.selectedAddress == selectedAddress));
+                other.selectedAddress == selectedAddress) &&
+            (identical(other.screenLoader, screenLoader) ||
+                other.screenLoader == screenLoader));
   }
 
   @override
@@ -302,11 +328,12 @@ mixin _$ShippingState {
       runtimeType,
       const DeepCollectionEquality().hash(shippingAddresses),
       const DeepCollectionEquality().hash(states),
-      selectedAddress);
+      selectedAddress,
+      screenLoader);
 
   @override
   String toString() {
-    return 'ShippingState(shippingAddresses: $shippingAddresses, states: $states, selectedAddress: $selectedAddress)';
+    return 'ShippingState(shippingAddresses: $shippingAddresses, states: $states, selectedAddress: $selectedAddress, screenLoader: $screenLoader)';
   }
 }
 
@@ -319,7 +346,8 @@ abstract mixin class $ShippingStateCopyWith<$Res> {
   $Res call(
       {List<ShippingAddress> shippingAddresses,
       List<States> states,
-      ShippingAddress? selectedAddress});
+      ShippingAddress? selectedAddress,
+      bool screenLoader});
 }
 
 /// @nodoc
@@ -338,6 +366,7 @@ class _$ShippingStateCopyWithImpl<$Res>
     Object? shippingAddresses = null,
     Object? states = null,
     Object? selectedAddress = freezed,
+    Object? screenLoader = null,
   }) {
     return _then(_self.copyWith(
       shippingAddresses: null == shippingAddresses
@@ -352,6 +381,10 @@ class _$ShippingStateCopyWithImpl<$Res>
           ? _self.selectedAddress
           : selectedAddress // ignore: cast_nullable_to_non_nullable
               as ShippingAddress?,
+      screenLoader: null == screenLoader
+          ? _self.screenLoader
+          : screenLoader // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -362,7 +395,8 @@ class _ShippingState implements ShippingState {
   const _ShippingState(
       {final List<ShippingAddress> shippingAddresses = const [],
       final List<States> states = const [],
-      this.selectedAddress})
+      this.selectedAddress,
+      this.screenLoader = false})
       : _shippingAddresses = shippingAddresses,
         _states = states;
 
@@ -387,6 +421,9 @@ class _ShippingState implements ShippingState {
 
   @override
   final ShippingAddress? selectedAddress;
+  @override
+  @JsonKey()
+  final bool screenLoader;
 
   /// Create a copy of ShippingState
   /// with the given fields replaced by the non-null parameter values.
@@ -405,7 +442,9 @@ class _ShippingState implements ShippingState {
                 .equals(other._shippingAddresses, _shippingAddresses) &&
             const DeepCollectionEquality().equals(other._states, _states) &&
             (identical(other.selectedAddress, selectedAddress) ||
-                other.selectedAddress == selectedAddress));
+                other.selectedAddress == selectedAddress) &&
+            (identical(other.screenLoader, screenLoader) ||
+                other.screenLoader == screenLoader));
   }
 
   @override
@@ -413,11 +452,12 @@ class _ShippingState implements ShippingState {
       runtimeType,
       const DeepCollectionEquality().hash(_shippingAddresses),
       const DeepCollectionEquality().hash(_states),
-      selectedAddress);
+      selectedAddress,
+      screenLoader);
 
   @override
   String toString() {
-    return 'ShippingState(shippingAddresses: $shippingAddresses, states: $states, selectedAddress: $selectedAddress)';
+    return 'ShippingState(shippingAddresses: $shippingAddresses, states: $states, selectedAddress: $selectedAddress, screenLoader: $screenLoader)';
   }
 }
 
@@ -432,7 +472,8 @@ abstract mixin class _$ShippingStateCopyWith<$Res>
   $Res call(
       {List<ShippingAddress> shippingAddresses,
       List<States> states,
-      ShippingAddress? selectedAddress});
+      ShippingAddress? selectedAddress,
+      bool screenLoader});
 }
 
 /// @nodoc
@@ -451,6 +492,7 @@ class __$ShippingStateCopyWithImpl<$Res>
     Object? shippingAddresses = null,
     Object? states = null,
     Object? selectedAddress = freezed,
+    Object? screenLoader = null,
   }) {
     return _then(_ShippingState(
       shippingAddresses: null == shippingAddresses
@@ -465,6 +507,10 @@ class __$ShippingStateCopyWithImpl<$Res>
           ? _self.selectedAddress
           : selectedAddress // ignore: cast_nullable_to_non_nullable
               as ShippingAddress?,
+      screenLoader: null == screenLoader
+          ? _self.screenLoader
+          : screenLoader // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }

@@ -23,3 +23,20 @@ class LoginUsecaseInput {
 
   LoginUsecaseInput(this.phoneNumber, this.email, this.password);
 }
+
+class LoginWithQrUseCase
+    extends BaseUseCase<LoginWithQrUseCaseInput, Authentication> {
+  final AuthRepository _authRepository;
+  LoginWithQrUseCase(this._authRepository);
+
+  @override
+  Future<Either<Failure, Authentication>> execute(
+      LoginWithQrUseCaseInput input) async {
+    return await _authRepository.loginWithQrCode(input.qrCode);
+  }
+}
+
+class LoginWithQrUseCaseInput {
+  String qrCode;
+  LoginWithQrUseCaseInput(this.qrCode);
+}

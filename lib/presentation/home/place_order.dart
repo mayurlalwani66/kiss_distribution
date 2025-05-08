@@ -14,12 +14,14 @@ class PlaceOrder extends StatelessWidget {
       required this.grandTotal,
       required this.totalAmount,
       required this.shippingCharges,
-      required this.onTap});
+      required this.onTap,
+      this.isLoading = false});
 
   final double grandTotal;
   final double totalAmount;
   final double shippingCharges;
   final void Function() onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +96,7 @@ class PlaceOrder extends StatelessWidget {
           ),
           const SizedBox(height: AppSize.s30),
           CommonElevatedButton(
+              isLoading: isLoading,
               text: AppStrings.orderNow,
               onTap: () {
                 onTap();

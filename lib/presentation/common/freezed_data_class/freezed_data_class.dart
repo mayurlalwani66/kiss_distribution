@@ -12,6 +12,7 @@ abstract class HomePageState with _$HomePageState {
     @Default([]) List<ShippingCharge> shippingCharges,
     @Default([]) List<PaymentMethod> paymentMethods,
     @Default([]) List<ShippingAddress> shippingAddresses,
+    @Default(false) bool screenLoader,
     CreateOrderResponse? createOrderResponse,
   }) = _HomePageState;
 }
@@ -22,6 +23,7 @@ abstract class ShippingState with _$ShippingState {
     @Default([]) List<ShippingAddress> shippingAddresses,
     @Default([]) List<States> states,
     ShippingAddress? selectedAddress,
+    @Default(false) bool screenLoader,
   }) = _ShippingState;
 }
 

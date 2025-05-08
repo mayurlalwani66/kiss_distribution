@@ -10,12 +10,12 @@ import 'package:k_distribution/presentation/resources/assets_manager.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
 import 'package:k_distribution/presentation/resources/font_manager.dart';
 import 'package:k_distribution/presentation/resources/strings_manager.dart';
-
 import '../common/common_widgets/app_utils.dart';
 import '../common/common_widgets/clipper.dart';
 import '../forgot_password/forgot_password.dart';
 import '../resources/values_manager.dart';
 import 'login_text_feild.dart';
+import 'qr_scan.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -47,7 +47,12 @@ class _LoginViewState extends ConsumerState<LoginScreen> {
         backgroundColor: ColorManager.colorWhite,
         body: Stack(children: [
           loginWidget(context),
-          if (loginState.isLoading) CircularProgressWidget()
+          if (loginState.isLoading)
+            Container(
+              decoration:
+                  BoxDecoration(color: ColorManager.colorTransparentWhite),
+              child: CircularProgressWidget(),
+            ),
         ]),
       ),
     );
@@ -160,7 +165,6 @@ class _LoginViewState extends ConsumerState<LoginScreen> {
                           enteredEmail,
                           enteredPhone,
                           enteredPassword,
-                          context,
                         );
                   }
                 }),
@@ -177,24 +181,29 @@ class _LoginViewState extends ConsumerState<LoginScreen> {
       width: double.infinity,
       height: AppSize.s52,
       child: OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: ColorManager.colorPrimary),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSize.s10),
-            ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: ColorManager.colorPrimary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSize.s10),
           ),
-          onPressed: () {},
-          icon: Image.asset(
-            ImageAssets.qrCodeImg,
-            height: AppSize.s30,
-          ),
-          label: Text(
-            AppStrings.loginWithQr,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontSize: FontSize.s16),
-          )),
+        ),
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+          );
+        },
+        icon: Image.asset(
+          ImageAssets.qrCodeImg,
+          height: AppSize.s30,
+        ),
+        label: Text(
+          AppStrings.loginWithQr,
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontSize: FontSize.s16),
+        ),
+      ),
     );
   }
 

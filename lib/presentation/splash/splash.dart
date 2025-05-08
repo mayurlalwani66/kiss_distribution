@@ -29,6 +29,7 @@ class _SplashViewState extends ConsumerState<SplashScreen> {
     final token = prefs.getToken();
 
     if (token != "") {
+      print(token);
       ref.read(dioProvider).options.headers["Authorization"] = "Bearer $token";
       Future.microtask(() {
         ref.read(userProvider.notifier).getUserData();

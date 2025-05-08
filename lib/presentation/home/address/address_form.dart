@@ -10,6 +10,7 @@ import 'package:k_distribution/presentation/common/common_provider/shipping_prov
 import 'package:k_distribution/presentation/common/common_widgets/custom_textfeild.dart';
 import '../../../app/di.dart';
 import '../../common/common_provider/form_data_provider.dart';
+import '../../common/common_widgets/circular_progress.dart';
 import '../../common/common_widgets/common_elevated_button.dart';
 import '../../resources/assets_manager.dart';
 import '../../resources/color_manager.dart';
@@ -45,7 +46,11 @@ class _AddressFormState extends ConsumerState<AddressForm> {
   @override
   void initState() {
     super.initState();
-
+    final appPrefs = ref.read(appPreferencesProvider);
+    _receiverNameController.text = widget.shippingData?.fullName ??
+        "${appPrefs.getUserFirstName()} ${appPrefs.getUserLastName()}";
+    _phoneNumberController.text =
+        widget.shippingData?.phoneNumber ?? appPrefs.getUserPhoneNumber();
     Future.microtask(_checkInternetAndBind);
     showCurrentData();
   }
@@ -54,7 +59,6 @@ class _AddressFormState extends ConsumerState<AddressForm> {
     hasInternet = await InternetConnection().hasInternetAccess;
     if (hasInternet) {
       await _bind();
-      showCurrentData();
     }
     setState(() {});
   }
@@ -67,10 +71,15 @@ class _AddressFormState extends ConsumerState<AddressForm> {
   }
 
   void showCurrentData() {
+    final appPrefs = ref.read(appPreferencesProvider);
     if (widget.isFromHomeScreen == false) {
       id = widget.shippingData?.id ?? 0;
       _streetController.text = widget.shippingData?.addressLineOne ?? "";
       _suburbController.text = widget.shippingData?.addressLineTwo ?? "";
+      _receiverNameController.text = widget.shippingData?.fullName ??
+          "${appPrefs.getUserFirstName()} ${appPrefs.getUserLastName()}";
+      _phoneNumberController.text =
+          widget.shippingData?.phoneNumber ?? appPrefs.getUserPhoneNumber();
       _postCodeController.text = widget.shippingData?.pincode ?? "";
       selectedState = widget.shippingData?.state ?? "";
       typeOfAddress = widget.shippingData?.typeOfAddress ?? AppStrings.home;
@@ -81,74 +90,85 @@ class _AddressFormState extends ConsumerState<AddressForm> {
   @override
   Widget build(BuildContext context) {
     final addressProvider = ref.watch(shippingAddressProvider.notifier);
+    final addressState = ref.watch(shippingAddressProvider);
+    final formDataControlKeyState = ref.watch(formDataControlKeyProvider);
     final appPrefs = ref.watch(appPreferencesProvider);
     return FractionallySizedBox(
       heightFactor: AppSize.s0_9,
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: AppPadding.p16,
-          left: AppPadding.p12,
-          right: AppPadding.p12,
-          bottom: MediaQuery.of(context).viewInsets.bottom + AppSize.s16,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            formHeader(context),
-            Expanded(
-              child: formFeilds(appPrefs),
+      child: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              top: AppPadding.p16,
+              left: AppPadding.p12,
+              right: AppPadding.p12,
+              bottom: MediaQuery.of(context).viewInsets.bottom + AppSize.s16,
             ),
-            Padding(
-              padding: const EdgeInsets.only(
-                bottom: AppPadding.p2,
-                top: AppPadding.p10,
-              ),
-              child: CommonElevatedButton(
-                  text: AppStrings.submit,
-                  onTap: () async {
-                    if (hasInternet) {
-                      if (_formKey.currentState!.validate()) {
-                        if (widget.isFromHomeScreen == true) {
-                          await addressProvider.addShippingAddress(
-                              AddShippingAddressInput(
-                                  _receiverNameController.text,
-                                  _phoneNumberController.text,
-                                  _postCodeController.text,
-                                  selectedState,
-                                  _streetController.text,
-                                  _suburbController.text,
-                                  typeOfAddress,
-                                  appPrefs.getUserId(),
-                                  isDefault,
-                                  true));
-                        } else {
-                          await addressProvider.updateShippingAddress(
-                              UpdateShippingAddressUseCaseInput(
-                                  "${widget.shippingData?.id}",
-                                  id,
-                                  _receiverNameController.text,
-                                  _phoneNumberController.text,
-                                  _postCodeController.text,
-                                  selectedState,
-                                  _streetController.text,
-                                  _suburbController.text,
-                                  typeOfAddress,
-                                  appPrefs.getUserId(),
-                                  isDefault,
-                                  true));
-                        }
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                formHeader(context),
+                Expanded(
+                  child: formFeilds(appPrefs),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: AppPadding.p2,
+                    top: AppPadding.p10,
+                  ),
+                  child: CommonElevatedButton(
+                      text: AppStrings.submit,
+                      onTap: () async {
+                        if (hasInternet) {
+                          if (_formKey.currentState!.validate()) {
+                            if (widget.isFromHomeScreen == true) {
+                              await addressProvider.addShippingAddress(
+                                  AddShippingAddressInput(
+                                      _receiverNameController.text,
+                                      _phoneNumberController.text,
+                                      _postCodeController.text,
+                                      selectedState,
+                                      _streetController.text,
+                                      _suburbController.text,
+                                      typeOfAddress,
+                                      appPrefs.getUserId(),
+                                      isDefault,
+                                      true));
+                            } else {
+                              await addressProvider.updateShippingAddress(
+                                  UpdateShippingAddressUseCaseInput(
+                                      "${widget.shippingData?.id}",
+                                      id,
+                                      _receiverNameController.text,
+                                      _phoneNumberController.text,
+                                      _postCodeController.text,
+                                      selectedState,
+                                      _streetController.text,
+                                      _suburbController.text,
+                                      typeOfAddress,
+                                      appPrefs.getUserId(),
+                                      isDefault,
+                                      true));
+                            }
 
-                        await addressProvider.getAllShippingAddress();
-
-                        if (context.mounted) {
-                          Navigator.pop(context, true);
+                            if (context.mounted) {
+                              Navigator.pop(context, true);
+                            }
+                          }
                         }
-                      }
-                    }
-                  }),
+                      }),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (addressState.asData?.value.screenLoader == true &&
+              formDataControlKeyState.isLoading)
+            Container(
+              decoration:
+                  BoxDecoration(color: ColorManager.colorTransparentWhite),
+              child: const Center(child: CircularProgressWidget()),
+            )
+        ],
       ),
     );
   }
@@ -184,7 +204,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                         }
 
                         if (value.length > 150) {
-                          return AppStrings.fullNameCharacterLimitError;
+                          return AppStrings.characterLimitError;
                         }
                         return null;
                       },
@@ -199,9 +219,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                       keyboardType: TextInputType.name,
                       label: AppStrings.receiverName,
                       hintText: AppStrings.receiverName,
-                      controller: _receiverNameController
-                        ..text =
-                            "${appPrefs.getUserFirstName()} ${appPrefs.getUserLastName()}",
+                      controller: _receiverNameController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return AppStrings.fullNameError;
@@ -213,8 +231,7 @@ class _AddressFormState extends ConsumerState<AddressForm> {
                       keyboardType: TextInputType.phone,
                       label: AppStrings.phoneNumber,
                       hintText: AppStrings.phoneNumber,
-                      controller: _phoneNumberController
-                        ..text = appPrefs.getUserPhoneNumber(),
+                      controller: _phoneNumberController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return AppStrings.phoneNumberError;

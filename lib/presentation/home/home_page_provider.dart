@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_distribution/app/extension.dart';
 import 'package:k_distribution/data/mapper/user_mapper.dart';
@@ -13,6 +14,7 @@ import '../../domain/model/product_model.dart';
 import '../../domain/usecase/product_usecase.dart';
 import '../common/common_provider/form_data_provider.dart';
 import '../common/freezed_data_class/freezed_data_class.dart';
+import '../view_order/view_order.dart';
 
 class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
   final Ref ref;
@@ -20,9 +22,24 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
 
   HomePageNotifier(this.ref) : super(const AsyncValue.loading());
 
-  Future<void> getAllProducts(ProductUseCaseInput input) async {
+  Future<void> initializeHomePage({List<OrderDetails>? orderDetails}) async {
+    await ref.read(shippingAddressProvider.notifier).getAllShippingAddress();
+    await getAllPaymentMethods("all");
+    await getAllProducts();
+
+    cartItems.clear();
+
+    if (orderDetails?.isNotEmpty ?? false) {
+      prefillCartQuantities(orderDetails!);
+    }
+  }
+
+  Future<void> getAllProducts() async {
     state = const AsyncValue.loading();
-    final result = await ref.read(productUseCaseProvider).execute(input);
+    final result = await ref.read(productUseCaseProvider).execute(
+          ProductUseCaseInput(
+              0, '', 0, false, [], 1, 1, 1000, '', 'desc', '', "PUBLISHED"),
+        );
 
     result.fold(
       (failure) {
@@ -108,14 +125,19 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
   }
 
 // Future create my order
-  Future<void> createOrderApi() async {
+  Future<void> createOrderApi(BuildContext context) async {
+    final current = state.valueOrNull ?? HomePageState();
+
+    state = AsyncValue.data(current.copyWith(screenLoader: true));
+
     final String? serviceCode = getShippingChargeProperty((x) => x.serviceCode);
     final String? deliveryTime =
         getShippingChargeProperty((x) => x.deliveryTime);
 
     final selectedAddress =
-        ref.read(shippingAddressProvider).asData!.value.selectedAddress;
+        ref.read(shippingAddressProvider).asData?.value.selectedAddress;
     if (selectedAddress == null) {
+      state = AsyncValue.data(current.copyWith(screenLoader: false));
       state = AsyncValue.error("No address selected", StackTrace.current);
       return;
     }
@@ -140,14 +162,37 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
             null,
             null));
 
-    print(result);
-
     result.fold((failure) {
+      state = AsyncValue.data(current.copyWith(screenLoader: false));
       state = AsyncValue.error(failure.message, StackTrace.current);
-    }, (data) {
-      final current = state.valueOrNull ?? HomePageState();
-      state = AsyncValue.data(current.copyWith(createOrderResponse: data));
+    }, (data) async {
+      final updatedState =
+          current.copyWith(createOrderResponse: data, screenLoader: false);
+      state = AsyncValue.data(updatedState);
+
+      final orderId = getOrderId();
+
+      if (orderId != 0 && context.mounted) {
+        Navigator.pop(context);
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (ctx) => ViewOrderScreen(orderId: '$orderId')),
+        );
+
+        cartItems.clear();
+        resetCartQuantities();
+      }
     });
+  }
+
+  bool isScreenLoading() {
+    bool isLoading = false;
+    state.whenData((homePageState) {
+      isLoading = homePageState.screenLoader;
+    });
+
+    return isLoading;
   }
 
   int getOrderId() {
@@ -179,29 +224,38 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
     }
   }
 
+  int get totalCartQty =>
+      state.asData?.value.products
+          .fold<int>(0, (sum, product) => sum + ((product.cartQty).toInt())) ??
+      0;
+
   void increment(int productId) {
     state = state.whenData((homePageState) {
-      homePageState.products.map((product) {
+      final updatedProducts = homePageState.products.map((product) {
         if (product.id == productId) {
-          product.cartQty++;
-          updateCart(product);
+          final updatedProduct = product.copyWith(cartQty: product.cartQty + 1);
+          updateCart(updatedProduct);
+          return updatedProduct;
         }
         return product;
       }).toList();
-      return homePageState;
+
+      return homePageState.copyWith(products: updatedProducts);
     });
   }
 
   void decrement(int productId) {
     state = state.whenData((homePageState) {
-      homePageState.products.map((product) {
+      final updatedProducts = homePageState.products.map((product) {
         if (product.id == productId && product.cartQty > 0) {
-          product.cartQty--;
-          updateCart(product);
+          final updatedProduct = product.copyWith(cartQty: product.cartQty - 1);
+          updateCart(updatedProduct);
+          return updatedProduct;
         }
         return product;
       }).toList();
-      return homePageState;
+
+      return homePageState.copyWith(products: updatedProducts);
     });
   }
 
@@ -235,11 +289,16 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
 
   void resetCartQuantities() {
     state = state.whenData((homePageState) {
-      for (var product in homePageState.products) {
-        product.cartQty = 0;
-        cartItems.clear();
-      }
-      return homePageState;
+      final updatedProducts = homePageState.products.map((product) {
+        return product.copyWith(cartQty: 0);
+      }).toList();
+
+      cartItems.clear();
+
+      return homePageState.copyWith(
+        products: updatedProducts,
+        createOrderResponse: null,
+      );
     });
   }
 
@@ -251,7 +310,6 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
       for (var product in products) {
         if (product.cartQty > 0) {
           totalWeight += product.cartQty * product.weight;
-          print(totalWeight);
         }
       }
     });
@@ -296,13 +354,22 @@ class HomePageNotifier extends StateNotifier<AsyncValue<HomePageState>> {
   void prefillCartQuantities(List<OrderDetails> reorderedProducts) {
     for (var item in reorderedProducts) {
       state = state.whenData((homePageState) {
-        for (var product in homePageState.products) {
-          if (product.id == item.productId) {
-            product.cartQty = item.orderedQuantity?.toInt() ?? 0;
-            updateCart(product);
-          }
-        }
-        return homePageState;
+        List<ProductViewModel> updatedProducts = homePageState.products
+            .map((product) {
+              if (product.id == item.productId) {
+                final reorderedProduct = product.copyWith(
+                    cartQty: item.orderedQuantity?.toInt() ?? 0);
+
+                updateCart(reorderedProduct);
+                return reorderedProduct;
+              } else {
+                return product;
+              }
+            })
+            .whereType<ProductViewModel>()
+            .toList();
+
+        return homePageState.copyWith(products: updatedProducts);
       });
     }
   }

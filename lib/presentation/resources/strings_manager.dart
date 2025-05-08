@@ -60,7 +60,10 @@ class AppStrings {
   static const String submit = "Submit";
   static const String streetNameError = "Street Name & No is required";
   static const String fullNameError = "Full Name is required";
-  static const String fullNameCharacterLimitError =
+  static const String firstNameError = "First Name is required";
+  static const String lastNameError = "Last Name is required";
+  static const String emailError = "Email is required";
+  static const String characterLimitError =
       "The character limit of 150 was exceeded.";
   static const String phoneNumberError = "Mobile number is required";
   static const String phoneNumberCharacterLimitError =

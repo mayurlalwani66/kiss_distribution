@@ -4,10 +4,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:k_distribution/data/network/error_handler.dart';
 import 'package:k_distribution/domain/model/order_model.dart';
 import 'package:k_distribution/domain/model/user_model.dart';
+import 'package:k_distribution/presentation/common/common_provider/form_data_provider.dart';
 import 'package:k_distribution/presentation/common/common_provider/shipping_provider.dart';
 import 'package:k_distribution/presentation/common/common_widgets/app_snakbar.dart';
 import 'package:k_distribution/presentation/common/common_widgets/circular_progress.dart';
-import 'package:k_distribution/presentation/common/common_widgets/error_text_widget.dart';
 import 'package:k_distribution/presentation/home/address/address_form.dart';
 import 'package:k_distribution/presentation/home/address/change_address.dart';
 import 'package:k_distribution/presentation/home/address_panel.dart';
@@ -20,22 +20,20 @@ import 'package:k_distribution/presentation/resources/assets_manager.dart';
 import 'package:k_distribution/presentation/resources/color_manager.dart';
 import 'package:k_distribution/presentation/resources/strings_manager.dart';
 import 'package:k_distribution/presentation/resources/values_manager.dart';
-import 'package:k_distribution/presentation/view_order/view_order.dart';
-import '../../domain/usecase/product_usecase.dart';
-import '../common/common_provider/form_data_provider.dart';
+import '../common/common_widgets/error_retry_widget.dart';
 import '../common/common_widgets/no_internet_widget.dart';
 import '../common/freezed_data_class/freezed_data_class.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  final List<OrderDetails>? orderDetails;
-  const HomeScreen({super.key, this.orderDetails});
+  List<OrderDetails>? orderDetails;
+  HomeScreen({super.key, this.orderDetails});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomePageState();
 }
 
 class _HomePageState extends ConsumerState<HomeScreen> {
-  int cartQty = 0;
+  // int cartQty = 0;
   bool hasInternet = true;
   @override
   void initState() {
@@ -48,28 +46,15 @@ class _HomePageState extends ConsumerState<HomeScreen> {
     if (hasInternet) {
       await _bind();
     }
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _bind() async {
-    final homeProvider = ref.read(homePageProvider.notifier);
-    final shippingProvider = ref.read(shippingAddressProvider.notifier);
-    final orderDetails = widget.orderDetails;
-    await shippingProvider.getAllShippingAddress();
-    await homeProvider.getAllPaymentMethods("all");
-    await homeProvider.getAllProducts(
-      ProductUseCaseInput(
-          0, '', 0, false, [], 1, 1, 1000, '', 'desc', '', "PUBLISHED"),
-    );
-
-    if (ref.read(shippingAddressProvider).asData?.value.selectedAddress !=
-        null) {
-      await homeProvider.getAllShippingCharges();
-    }
-    if (orderDetails == null) return;
-    if (orderDetails.isNotEmpty) {
-      homeProvider.prefillCartQuantities(orderDetails);
-    }
+    final homeProviderNotifier = ref.read(homePageProvider.notifier);
+    await homeProviderNotifier.initializeHomePage(
+        orderDetails: widget.orderDetails);
   }
 
   void _showAddressBottomSheet(
@@ -77,6 +62,7 @@ class _HomePageState extends ConsumerState<HomeScreen> {
       List<ShippingAddress> shippingAddresses,
       ShippingAddress? selectedAddress) {
     final notifier = ref.watch(shippingAddressProvider.notifier);
+    ref.read(markAsDefaultProvider.notifier).reset();
 
     if (selectedAddress != null) {
       showModalBottomSheet(
@@ -85,7 +71,42 @@ class _HomePageState extends ConsumerState<HomeScreen> {
         isDismissible: false,
         useSafeArea: true,
         context: context,
-        builder: (ctx) => ChangeAddress(shippingAddresses: shippingAddresses),
+        builder: (ctx) {
+          return Consumer(builder: (context, ref, _) {
+            final isLoading = ref.watch(markAsDefaultProvider).maybeWhen(
+                  loading: () => true,
+                  orElse: () => false,
+                );
+            return ChangeAddress(
+              isLoading: isLoading,
+              shippingAddresses: shippingAddresses,
+              onSelectAddress: (ShippingAddress address) async {
+                hasInternet = await InternetConnection().hasInternetAccess;
+                if (hasInternet == true) {
+                  await ref
+                      .read(markAsDefaultProvider.notifier)
+                      .markAsDefault(address.id!);
+
+                  ref
+                      .read(shippingAddressProvider.notifier)
+                      .setSelectedAddress(address);
+
+                  Future.microtask(() {
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  });
+                } else {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    AppSnackbar.show(
+                        context, ResponseMessage.NO_INTERNET_CONNECTION);
+                  }
+                }
+              },
+            );
+          });
+        },
       );
     } else {
       showModalBottomSheet(
@@ -98,42 +119,55 @@ class _HomePageState extends ConsumerState<HomeScreen> {
   }
 
   void _showPlaceOrderSheet(
-      BuildContext context, HomePageNotifier homeProvider) {
+    BuildContext context,
+    HomePageNotifier homeProviderNotifier,
+    AsyncValue<HomePageState> homeState,
+  ) {
     showModalBottomSheet(
       context: context,
-      builder: (ctx) => PlaceOrder(
-        grandTotal: homeProvider.getGrandTotal(),
-        totalAmount: homeProvider.getTotalAmount(),
-        shippingCharges: homeProvider.getShippingCharge(),
-        onTap: () async {
-          if (ref.read(homePageProvider).hasError) {
-            AppSnackbar.show(
-                context, ref.read(homePageProvider).error.toString());
-            return;
-          }
-          await homeProvider.createOrderApi();
-          final orderId = homeProvider.getOrderId();
-          if (orderId != null || orderId != 0) {
-            if (context.mounted) {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (ctx) =>
-                          ViewOrderScreen(orderId: '$orderId'))).then((_) {
-                homeProvider.resetCartQuantities();
-                cartQty = 0;
-              });
-            }
-          }
-        },
-      ),
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final homeState = ref.watch(homePageProvider);
+
+            final isLoading = homeProviderNotifier.isScreenLoading();
+
+            return Stack(
+              children: [
+                PlaceOrder(
+                  grandTotal: homeProviderNotifier.getGrandTotal(),
+                  totalAmount: homeProviderNotifier.getTotalAmount(),
+                  shippingCharges: homeProviderNotifier.getShippingCharge(),
+                  onTap: () async {
+                    if (homeState.hasError) {
+                      AppSnackbar.show(context, homeState.error.toString());
+                      return;
+                    }
+
+                    await homeProviderNotifier.createOrderApi(context);
+                    homeProviderNotifier.totalCartQty;
+                  },
+                ),
+                if (isLoading)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: ColorManager.colorTransparentWhite),
+                      child: CircularProgressWidget(),
+                    ),
+                  )
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final homeProvider = ref.read(homePageProvider.notifier);
+    final homeProviderNotifier = ref.read(homePageProvider.notifier);
     final shippingState = ref.watch(shippingAddressProvider);
     final homePageState = ref.watch(homePageProvider);
 
@@ -143,28 +177,41 @@ class _HomePageState extends ConsumerState<HomeScreen> {
         appBar: _buildAppBar(),
         endDrawer: DrawerView(
           onPopToHomeScreen: () async {
+            homeProviderNotifier.resetCartQuantities();
+            widget.orderDetails = [];
             _checkInternetAndBind();
           },
         ),
         endDrawerEnableOpenDragGesture: false,
         drawerScrimColor:
             ColorManager.colorWhite.withValues(alpha: AppSize.s0_65),
-        bottomNavigationBar: homeProvider.getTotalItems() == 0
+        bottomNavigationBar: homeProviderNotifier.getTotalItems() == 0
             ? const SizedBox.shrink()
             : TotalAmountWidget(
-                onTap: () => _showPlaceOrderSheet(context, homeProvider),
-                totalItems: homeProvider.getTotalItems(),
-                grandTotal: homeProvider.getGrandTotal(),
+                onTap: () => _showPlaceOrderSheet(
+                    context, homeProviderNotifier, homePageState),
+                totalItems: homeProviderNotifier.getTotalItems(),
+                grandTotal: homeProviderNotifier.getGrandTotal(),
+                onTotalAmountCalculated: () async {
+                  await ref
+                      .read(formDataControlKeyProvider.notifier)
+                      .getDynamicFormDataByControlKeys(ref);
+                  await homeProviderNotifier.getAllShippingCharges();
+                },
               ),
         body: hasInternet
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ? Stack(
                 children: [
-                  _buildShippingSection(
-                      context,
-                      shippingState.value?.shippingAddresses ?? [],
-                      shippingState.value?.selectedAddress),
-                  _buildProductList(homePageState, homeProvider),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildShippingSection(
+                          context,
+                          shippingState.value?.shippingAddresses ?? [],
+                          shippingState.value?.selectedAddress),
+                      _buildProductList(homePageState, homeProviderNotifier),
+                    ],
+                  ),
                 ],
               )
             : NoInternetWidget(onRetry: _checkInternetAndBind),
@@ -196,25 +243,29 @@ class _HomePageState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildProductList(
-      AsyncValue<HomePageState> homeState, HomePageNotifier homeProvider) {
+  Widget _buildProductList(AsyncValue<HomePageState> homeState,
+      HomePageNotifier homeProviderNotifier) {
     return Expanded(
       child: homeState.when(
         loading: () => CircularProgressWidget(),
-        error: (error, stackTrace) => ErrorTextWidget(error: error.toString()),
+        error: (error, stackTrace) {
+          if (error.toString() == ResponseMessage.NO_INTERNET_CONNECTION) {
+            return NoInternetWidget(
+              onRetry: () {
+                homeProviderNotifier.getAllProducts();
+              },
+            );
+          }
+          return ErrorRetryWidget(
+            message: error.toString(),
+            onRetry: () {
+              homeProviderNotifier.getAllProducts();
+            },
+          );
+        },
         data: (products) => ProductList(
           products: products.products,
-          increaseQuantity: (productId) async {
-            final ctx = context;
-            final isConnected = await InternetConnection().hasInternetAccess;
-
-            if (!ctx.mounted) return;
-
-            if (!isConnected) {
-              AppSnackbar.show(ctx, ResponseMessage.NO_INTERNET_CONNECTION);
-              return;
-            }
-
+          increaseQuantity: (productId) {
             final hasAddress = ref
                     .read(shippingAddressProvider)
                     .asData
@@ -222,33 +273,21 @@ class _HomePageState extends ConsumerState<HomeScreen> {
                     .selectedAddress !=
                 null;
             if (hasAddress) {
-              homeProvider.increment(productId);
-              cartQty++;
-              if (homeProvider.getShippingCharge() == 0.0 && cartQty > 0) {
-                await homeProvider.getAllShippingCharges();
+              homeProviderNotifier.increment(productId);
+              if (homeState.error != ResponseMessage.NO_INTERNET_CONNECTION) {
+                if (homeProviderNotifier.getShippingCharge() > 0 ||
+                    homeProviderNotifier.totalCartQty > 1) {
+                  homeProviderNotifier.getAllShippingCharges();
+                }
               }
             } else {
-              AppSnackbar.show(ctx, AppStrings.addressRequiredMsg);
+              AppSnackbar.show(context, AppStrings.addressRequiredMsg);
             }
           },
-          decreaseQuantity: (productId) async {
-            final ctx = context;
-            final isConnected = await InternetConnection().hasInternetAccess;
-
-            if (!ctx.mounted) return;
-
-            if (!isConnected) {
-              AppSnackbar.show(ctx, ResponseMessage.NO_INTERNET_CONNECTION);
-              return;
-            }
-
-            cartQty--;
-            homeProvider.decrement(productId);
-            if (homeProvider.getShippingCharge() > 0.0 && cartQty > 0) {
-              await homeProvider.getAllShippingCharges();
-            }
+          decreaseQuantity: (productId) {
+            homeProviderNotifier.decrement(productId);
           },
-          totalAmount: homeProvider.getSingleProductTotalAmount,
+          totalAmount: homeProviderNotifier.getSingleProductTotalAmount,
         ),
       ),
     );

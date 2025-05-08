@@ -47,11 +47,12 @@ class UserNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 
   Future<void> updateUserProfile(UpdateUserUseCaseInput request) async {
+    state = AsyncValue.loading();
     final result = await _updateUserUseCase.execute(request);
 
     result.fold(
       (failure) {
-        state = AsyncError(failure.message, StackTrace.current);
+        state = AsyncValue.error(failure.message, StackTrace.current);
       },
       (_) async {
         await getUserData();

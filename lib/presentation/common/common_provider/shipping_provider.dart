@@ -13,8 +13,6 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
   ShippingAddressNotifier(this.ref) : super(const AsyncValue.loading());
 
   Future<void> getAllShippingAddress() async {
-    state = const AsyncValue.loading();
-
     final result = await ref.read(addressUseCaseProvider).execute(null);
 
     result.fold(
@@ -55,8 +53,6 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
 
   // Add shipping address method
   Future<void> addShippingAddress(AddShippingAddressInput input) async {
-    state = const AsyncValue.loading();
-
     final result = await ref.watch(addAddressUseCaseProvider).execute(input);
 
     result.fold(
@@ -117,30 +113,40 @@ class ShippingAddressNotifier extends StateNotifier<AsyncValue<ShippingState>> {
   }
 
   Future<void> getAllStates() async {
-    state = const AsyncValue.loading();
-    final result = await ref.read(statesUseCaseProvider).execute(
-          ref.watch(formDataStoreProvider).addressLevel1,
-        );
+    final current = state.valueOrNull ?? ShippingState();
+
+    state = AsyncValue.data(current.copyWith(screenLoader: true));
+
+    final result = await ref
+        .read(statesUseCaseProvider)
+        .execute(ref.watch(formDataStoreProvider).addressLevel1);
 
     result.fold(
       (failure) {
+        state = AsyncValue.data(current.copyWith(screenLoader: true));
         state = AsyncValue.error(failure.message, StackTrace.current);
       },
       (statesList) {
         final current = state.valueOrNull ?? ShippingState();
-        state = AsyncValue.data(current.copyWith(states: statesList));
+        state = AsyncValue.data(
+            current.copyWith(states: statesList, screenLoader: false));
       },
     );
   }
 
   Future<void> deleteShippingAddress(
       DeleteShippingAddressUseCaseInput input, BuildContext context) async {
+    final current = state.valueOrNull ?? ShippingState();
+
+    state = AsyncValue.data(current.copyWith(screenLoader: true));
     final result =
         await ref.watch(deleteShippingAddressUseCaseProvider).execute(input);
 
     result.fold((failure) {
+      state = AsyncValue.data(current.copyWith(screenLoader: false));
       state = AsyncValue.error(failure.message, StackTrace.current);
     }, (data) {
+      state = AsyncValue.data(current.copyWith(screenLoader: false));
       if (data.isNotEmpty) {
         Navigator.pop(context, true);
       }
@@ -170,10 +176,10 @@ final shippingAddressProvider =
 class MarkAsDefaultNotifier extends StateNotifier<AsyncValue<num>> {
   final MarkAsDefaultUseCase _markAsDefaultUseCase;
 
-  MarkAsDefaultNotifier(this._markAsDefaultUseCase)
-      : super(AsyncValue.loading());
+  MarkAsDefaultNotifier(this._markAsDefaultUseCase) : super(AsyncValue.data(0));
 
   Future<void> markAsDefault(int id) async {
+    state = AsyncValue.loading();
     final result = await _markAsDefaultUseCase.execute(id);
 
     result.fold((failure) {
@@ -181,6 +187,10 @@ class MarkAsDefaultNotifier extends StateNotifier<AsyncValue<num>> {
     }, (data) {
       state = AsyncValue.data(data);
     });
+  }
+
+  void reset() {
+    state = const AsyncValue.data(0);
   }
 }
 
